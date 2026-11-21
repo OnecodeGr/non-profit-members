@@ -5,6 +5,9 @@ import { handleTenant, handlePublic } from './tenant.js';
 import { handleContact } from './contact.js';
 import { renderLanding, contactConfig } from './landing.js';
 import { verify, getCookie } from './util.js';
+import { handlePortal } from './features.js';
+import { handleWallet, walletFlags } from './wallet.js';
+import { weeklyDigest } from './admin.js';
 
 const SECURITY_HEADERS = {
   'x-content-type-options': 'nosniff',
@@ -22,7 +25,9 @@ async function api(req, env, path) {
   }
   if (path.startsWith('/api/admin/')) return handleAdmin(req, env, path);
   if (path === '/api/public/contact' && req.method === 'POST') return handleContact(req, env);
-  if (path === '/api/public/config' && req.method === 'GET') return json(contactConfig(env));
+  if (path === '/api/public/config' && req.method === 'GET') return json({ ...contactConfig(env), wallet: walletFlags(env) });
+  if (path.startsWith('/api/public/wallet/') || path.startsWith('/api/public/logo/')) return handleWallet(req, env, path);
+  if (path.startsWith('/api/portal/')) return handlePortal(req, env, path);
   if (path.startsWith('/api/public/')) return handlePublic(req, env, path);
   return handleTenant(req, env, path);
 }
@@ -42,6 +47,7 @@ export default {
           res = json({ error: 'server_error' }, 500);
         }
       }
+      res = new Response(res.body, res); // redirects and fetched responses have immutable headers
       for (const [k, v] of Object.entries(SECURITY_HEADERS)) res.headers.set(k, v);
       return res;
     }
@@ -61,5 +67,10 @@ export default {
       });
     }
     return env.ASSETS.fetch(req);
+  },
+
+  // Weekly billing digest to OneCode sales (configured in wrangler.jsonc "triggers").
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(weeklyDigest(env));
   },
 };

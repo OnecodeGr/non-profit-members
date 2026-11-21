@@ -3,6 +3,10 @@ import {
   HttpError, json, body, now, today, sign, verify, getCookie, setCookie, hashPassword, verifyPassword,
   randomToken, str, int, cents, isoDate, checkRateLimit, recordFailure, clearFailures, clientIp, LANGS,
 } from './util.js';
+import { audit } from './audit.js';
+import { subscriptionState, activeMemberCount } from './billing.js';
+import { handleFeatures } from './features.js';
+import { walletFlags } from './wallet.js';
 
 const COOKIE = 'm_sess';
 const TTL = 12 * 3600;
@@ -24,7 +28,7 @@ export function tenantPublic(t) {
   return {
     key: t.key, name: t.name, address: t.address, phone: t.phone, email: t.email, tax_id: t.tax_id,
     website: t.website, logo: t.logo, color: t.color, currency: t.currency, default_lang: t.default_lang,
-    card_note: t.card_note,
+    card_note: t.card_note, bank_name: t.bank_name, bank_iban: t.bank_iban, bank_beneficiary: t.bank_beneficiary,
   };
 }
 
@@ -41,6 +45,7 @@ async function session(req, env) {
     user: { id: row.uid, username: row.username, full_name: row.full_name, role: row.role },
     tenant: row,
     tid: row.id,
+    who: { tid: row.id, userId: row.uid, actor: row.username, ip: clientIp(req) },
   };
 }
 
@@ -206,6 +211,7 @@ export async function handlePublic(req, env, path) {
     if (!t) throw new HttpError(404, 'not_found');
     return json({
       tenant: { name: t.name, logo: t.logo, color: t.color, default_lang: t.default_lang, key: t.key },
+      wallet: walletFlags(env),
       member: {
         member_no: row.member_no, first_name: row.first_name, last_name: row.last_name, status: row.status,
         photo: row.photo, type_name: row.type_name, join_date: row.join_date, in_good_standing: row.balance <= 0,
@@ -265,6 +271,7 @@ export async function handleTenant(req, env, path) {
     if (!row.tactive) throw new HttpError(403, 'tenant_inactive');
     await clearFailures(env, bucket);
     await env.DB.prepare('UPDATE users SET last_login = ? WHERE id = ?').bind(now(), row.id).run();
+    await audit(env, { tid: row.tid, userId: row.id, actor: str(b.username, 60), ip: clientIp(req) }, 'user.login', { entity: 'user', id: row.id });
     const token = await sign(env, { t: row.tid, u: row.id, exp: Math.floor(Date.now() / 1000) + TTL }, 'tenant');
     return json({ ok: true }, 200, { 'set-cookie': setCookie(COOKIE, token, TTL, req) });
   }
@@ -276,10 +283,16 @@ export async function handleTenant(req, env, path) {
   const ctx = await session(req, env);
   const tid = ctx.tid;
   const DB = env.DB;
+  const who = ctx.who;
+  // Subscription expired beyond the grace period: the organisation keeps read-only access.
+  if (method !== 'GET' && !['/api/logout', '/api/me/password'].includes(path) && subscriptionState(ctx.tenant).status === 'expired') {
+    throw new HttpError(402, 'subscription_expired');
+  }
 
   if (path === '/api/me' && method === 'GET') {
     const { results: types } = await DB.prepare('SELECT * FROM membership_types WHERE tenant_id = ? ORDER BY name COLLATE NOCASE').bind(tid).all();
-    return json({ user: ctx.user, tenant: tenantPublic(ctx.tenant), types, public_url: publicUrl(env, req) });
+    const subscription = subscriptionState(ctx.tenant, await activeMemberCount(env, tid));
+    return json({ user: ctx.user, tenant: tenantPublic(ctx.tenant), types, public_url: publicUrl(env, req), subscription });
   }
 
   if (path === '/api/me/password' && method === 'POST') {
@@ -288,6 +301,7 @@ export async function handleTenant(req, env, path) {
     if (!(await verifyPassword(String(b.current || ''), u.password_hash))) throw new HttpError(400, 'wrong_password');
     if (!b.password || String(b.password).length < 8) throw new HttpError(400, 'password_too_short');
     await DB.prepare('UPDATE users SET password_hash = ? WHERE id = ?').bind(await hashPassword(String(b.password)), ctx.user.id).run();
+    await audit(env, who, 'user.password', { entity: 'user', id: ctx.user.id });
     return json({ ok: true });
   }
 
@@ -342,6 +356,9 @@ export async function handleTenant(req, env, path) {
     const b = await body(req);
     const f = memberFields(b);
     await checkType(env, tid, f.membership_type_id);
+    if (ctx.tenant.member_limit && f.status === 'active' && (await activeMemberCount(env, tid)) >= ctx.tenant.member_limit) {
+      throw new HttpError(403, 'member_limit_reached');
+    }
     let no = int(b.member_no, 0);
     if (no) {
       const dup = await DB.prepare('SELECT id FROM members WHERE tenant_id = ? AND member_no = ?').bind(tid, no).first();
@@ -358,6 +375,7 @@ export async function handleTenant(req, env, path) {
       await DB.prepare(`INSERT INTO transactions (tenant_id, member_id, type, amount, date, description, status, created_by, created_at)
         VALUES (?, ?, 'initial', ?, ?, '', 'confirmed', ?, ?)`).bind(tid, r.id, cents(b.initial_balance), today(), ctx.user.id, ts).run();
     }
+    await audit(env, who, 'member.create', { entity: 'member', id: r.id, summary: `№${no} ${f.last_name} ${f.first_name}` });
     return json({ member: await getMember(env, tid, r.id) }, 201);
   }
 
@@ -416,6 +434,10 @@ export async function handleTenant(req, env, path) {
         report.errors.push({ row: (b.offset || 0) + i + 1, error: e.code || String(e.message || e) });
       }
     }
+    if (ctx.tenant.member_limit && report.created) {
+      const active = await activeMemberCount(env, tid);
+      if (active + report.created > ctx.tenant.member_limit) throw new HttpError(403, 'member_limit_reached');
+    }
     for (let i = 0; i < stmts.length; i += 50) await DB.batch(stmts.slice(i, i + 50));
     if (initials.length) {
       const ist = [];
@@ -429,6 +451,7 @@ export async function handleTenant(req, env, path) {
       }
       for (let i = 0; i < ist.length; i += 50) await DB.batch(ist.slice(i, i + 50));
     }
+    await audit(env, who, 'member.import', { summary: `+${report.created} / ~${report.updated} / =${report.skipped}`, details: { errors: report.errors.length } });
     return json(report);
   }
 
@@ -454,11 +477,17 @@ export async function handleTenant(req, env, path) {
           birth_date=?, id_number=?, join_date=?, membership_type_id=?, status=?, notes=?, photo=?, updated_at=? WHERE id = ? AND tenant_id = ?`)
         .bind(no, f.first_name, f.last_name, f.father_name, f.email, f.phone, f.address, f.city, f.postal_code, f.birth_date,
           f.id_number, f.join_date, f.membership_type_id, f.status, f.notes, f.photo, now(), id, tid).run();
+      const changed = Object.keys(f).filter((k) => k !== 'photo' && String(f[k] ?? '') !== String(cur[k] ?? ''));
+      if (f.photo !== cur.photo) changed.push('photo');
+      if (no !== cur.member_no) changed.push('member_no');
+      await audit(env, who, 'member.update', { entity: 'member', id, summary: `№${no} ${f.last_name} ${f.first_name}`,
+        details: Object.fromEntries(changed.map((k) => [k, k === 'photo' ? '…' : [k === 'member_no' ? cur.member_no : cur[k], k === 'member_no' ? no : f[k]]])) });
       return json({ member: await getMember(env, tid, id) });
     }
     if (method === 'DELETE') {
       need(ctx, 'admin');
-      await getMember(env, tid, id);
+      const gone = await getMember(env, tid, id);
+      await audit(env, who, 'member.delete', { entity: 'member', id, summary: `№${gone.member_no} ${gone.last_name} ${gone.first_name}`, details: { balance: gone.balance } });
       await DB.batch([
         DB.prepare('DELETE FROM transactions WHERE member_id = ? AND tenant_id = ?').bind(id, tid),
         DB.prepare('DELETE FROM members WHERE id = ? AND tenant_id = ?').bind(id, tid),
@@ -471,6 +500,7 @@ export async function handleTenant(req, env, path) {
   if (m && method === 'POST') {
     need(ctx, 'admin');
     await DB.prepare('UPDATE members SET qr_token = ?, updated_at = ? WHERE id = ? AND tenant_id = ?').bind(randomToken(18), now(), int(m[1]), tid).run();
+    await audit(env, who, 'member.regen_qr', { entity: 'member', id: int(m[1]) });
     return json({ member: await getMember(env, tid, int(m[1])) });
   }
 
@@ -499,6 +529,7 @@ export async function handleTenant(req, env, path) {
     if (!name) throw new HttpError(400, 'name_required');
     const r = await DB.prepare('INSERT INTO membership_types (tenant_id, name, annual_fee, active, created_at) VALUES (?, ?, ?, 1, ?) RETURNING *')
       .bind(tid, name, Math.max(0, cents(b.annual_fee)), now()).first();
+    await audit(env, who, 'type.create', { entity: 'type', id: r.id, summary: name, details: { annual_fee: r.annual_fee } });
     return json({ type: r }, 201);
   }
   m = path.match(/^\/api\/types\/(\d+)$/);
@@ -509,6 +540,7 @@ export async function handleTenant(req, env, path) {
     if (!name) throw new HttpError(400, 'name_required');
     await DB.prepare('UPDATE membership_types SET name = ?, annual_fee = ?, active = ? WHERE id = ? AND tenant_id = ?')
       .bind(name, Math.max(0, cents(b.annual_fee)), b.active === false || b.active === 0 ? 0 : 1, int(m[1]), tid).run();
+    await audit(env, who, 'type.update', { entity: 'type', id: int(m[1]), summary: name, details: { annual_fee: Math.max(0, cents(b.annual_fee)) } });
     return json({ ok: true });
   }
   if (m && method === 'DELETE') {
@@ -517,6 +549,7 @@ export async function handleTenant(req, env, path) {
       DB.prepare('UPDATE members SET membership_type_id = NULL WHERE membership_type_id = ? AND tenant_id = ?').bind(int(m[1]), tid),
       DB.prepare('DELETE FROM membership_types WHERE id = ? AND tenant_id = ?').bind(int(m[1]), tid),
     ]);
+    await audit(env, who, 'type.delete', { entity: 'type', id: int(m[1]) });
     return json({ ok: true });
   }
 
@@ -543,6 +576,8 @@ export async function handleTenant(req, env, path) {
       .bind(tid, member.id, type, txSign(type, amount), b.year ? int(b.year) : null, isoDate(b.date, today()), str(b.description, 300),
         METHODS.includes(b.method) ? b.method : type === 'payment' ? 'cash' : '', str(b.reference, 100),
         confirmNow ? 'confirmed' : 'pending', receipt, ctx.user.id, confirmNow ? ctx.user.id : null, confirmNow ? ts : null, ts).first();
+    await audit(env, who, `${type}.create`, { entity: 'transaction', id: r.id, summary: `№${member.member_no} ${member.last_name} · ${(amount / 100).toFixed(2)}`,
+      details: { status: r.status, receipt_no: r.receipt_no, method: r.method } });
     return json({ transaction: r }, 201);
   }
 
@@ -552,11 +587,12 @@ export async function handleTenant(req, env, path) {
     const ids = (Array.isArray(b.ids) ? b.ids : []).map((x) => int(x)).filter(Boolean).slice(0, 500);
     let done = 0;
     for (const id of ids) {
-      const tx = await DB.prepare(`SELECT id FROM transactions WHERE id = ? AND tenant_id = ? AND status = 'pending'`).bind(id, tid).first();
+      const tx = await DB.prepare(`SELECT id, amount, member_id FROM transactions WHERE id = ? AND tenant_id = ? AND status = 'pending'`).bind(id, tid).first();
       if (!tx) continue;
       const receipt = await nextReceipt(env, tid);
       await DB.prepare(`UPDATE transactions SET status='confirmed', receipt_no=?, confirmed_by=?, confirmed_at=? WHERE id = ?`)
         .bind(receipt, ctx.user.id, now(), id).run();
+      await audit(env, who, 'payment.confirm', { entity: 'transaction', id, summary: `#${receipt} · ${(-tx.amount / 100).toFixed(2)}`, details: { member_id: tx.member_id } });
       done++;
     }
     return json({ ok: true, confirmed: done });
@@ -567,6 +603,7 @@ export async function handleTenant(req, env, path) {
     need(ctx, 'admin');
     const r = await DB.prepare(`UPDATE transactions SET status='void', confirmed_by=?, confirmed_at=? WHERE id = ? AND tenant_id = ? AND status != 'void'`)
       .bind(ctx.user.id, now(), int(m[1]), tid).run();
+    if (r.meta.changes) await audit(env, who, m[2] === 'reject' ? 'payment.reject' : 'transaction.void', { entity: 'transaction', id: int(m[1]) });
     return json({ ok: true, changed: r.meta.changes });
   }
 
@@ -604,6 +641,7 @@ export async function handleTenant(req, env, path) {
       }
     }
     for (let i = 0; i < stmts.length; i += 80) await DB.batch(stmts.slice(i, i + 80));
+    await audit(env, who, 'initial.save', { summary: `${items.length}`, details: { date, items: items.slice(0, 50) } });
     return json({ ok: true, count: items.length });
   }
 
@@ -653,6 +691,7 @@ export async function handleTenant(req, env, path) {
     await DB.batch(stmts);
     const tot = await DB.prepare(`SELECT COUNT(*) AS n, COALESCE(SUM(amount),0) AS s FROM transactions WHERE run_id = ?`).bind(run.id).first();
     await DB.prepare('UPDATE debit_runs SET member_count = ?, total = ? WHERE id = ?').bind(tot.n, tot.s, run.id).run();
+    await audit(env, who, 'debits.run', { entity: 'debit_run', id: run.id, summary: `${year} · ${tot.n} · ${(tot.s / 100).toFixed(2)}`, details: { amounts } });
     return json({ ok: true, run_id: run.id, members: tot.n, total: tot.s }, 201);
   }
 
@@ -666,6 +705,7 @@ export async function handleTenant(req, env, path) {
       DB.prepare('DELETE FROM transactions WHERE run_id = ? AND tenant_id = ?').bind(id, tid),
       DB.prepare('DELETE FROM debit_runs WHERE id = ?').bind(id),
     ]);
+    await audit(env, who, 'debits.undo', { entity: 'debit_run', id });
     return json({ ok: true });
   }
 
@@ -701,11 +741,14 @@ export async function handleTenant(req, env, path) {
     const logo = b.logo === undefined ? t.logo : String(b.logo || '');
     if (logo && (!logo.startsWith('data:image/') || logo.length > 300000)) throw new HttpError(400, 'invalid_logo');
     const color = /^#[0-9a-fA-F]{6}$/.test(b.color || '') ? b.color : t.color;
-    await DB.prepare(`UPDATE tenants SET name=?, address=?, phone=?, email=?, tax_id=?, website=?, logo=?, color=?, currency=?, default_lang=?, card_note=? WHERE id = ?`)
+    await DB.prepare(`UPDATE tenants SET name=?, address=?, phone=?, email=?, tax_id=?, website=?, logo=?, color=?, currency=?, default_lang=?, card_note=?,
+        bank_name=?, bank_iban=?, bank_beneficiary=? WHERE id = ?`)
       .bind(str(b.name ?? t.name, 200) || t.name, str(b.address ?? t.address, 300), str(b.phone ?? t.phone, 50), str(b.email ?? t.email, 200),
         str(b.tax_id ?? t.tax_id, 50), str(b.website ?? t.website, 200), logo, color,
         /^[A-Z]{3}$/.test(b.currency || '') ? b.currency : t.currency, LANGS.includes(b.default_lang) ? b.default_lang : t.default_lang,
-        str(b.card_note ?? t.card_note, 200), tid).run();
+        str(b.card_note ?? t.card_note, 200), str(b.bank_name ?? t.bank_name, 100), str(b.bank_iban ?? t.bank_iban, 40).replace(/\s+/g, ' '),
+        str(b.bank_beneficiary ?? t.bank_beneficiary, 150), tid).run();
+    await audit(env, who, 'settings.update', { entity: 'tenant', id: tid, details: Object.fromEntries(Object.keys(b).filter((k) => k !== 'logo' && String(b[k] ?? '') !== String(t[k] ?? '')).map((k) => [k, b[k]])) });
     return json({ ok: true });
   }
 
@@ -726,6 +769,7 @@ export async function handleTenant(req, env, path) {
     if (dup) throw new HttpError(409, 'username_taken');
     await DB.prepare('INSERT INTO users (tenant_id, username, full_name, password_hash, role, created_at) VALUES (?,?,?,?,?,?)')
       .bind(tid, username, str(b.full_name, 100), await hashPassword(String(b.password)), role, now()).run();
+    await audit(env, who, 'user.create', { entity: 'user', summary: `${username} (${role})` });
     return json({ ok: true }, 201);
   }
   m = path.match(/^\/api\/users\/(\d+)$/);
@@ -737,6 +781,7 @@ export async function handleTenant(req, env, path) {
     if (id === ctx.user.id && (method === 'DELETE')) throw new HttpError(400, 'cannot_delete_self');
     if (method === 'DELETE') {
       await DB.prepare('DELETE FROM users WHERE id = ?').bind(id).run();
+      await audit(env, who, 'user.delete', { entity: 'user', id, summary: u.username });
       return json({ ok: true });
     }
     const b = await body(req);
@@ -749,8 +794,12 @@ export async function handleTenant(req, env, path) {
     }
     await DB.prepare('UPDATE users SET full_name = ?, role = ?, active = ?, password_hash = ? WHERE id = ?')
       .bind(str(b.full_name ?? u.full_name, 100), role, active, hash, id).run();
+    await audit(env, who, 'user.update', { entity: 'user', id, summary: u.username, details: { role, active, password_changed: !!b.password } });
     return json({ ok: true });
   }
+
+  const handled = await handleFeatures(req, env, path, ctx, q, { getMember, memberTransactions, need, publicUrl });
+  if (handled) return handled;
 
   throw new HttpError(404, 'not_found');
 }

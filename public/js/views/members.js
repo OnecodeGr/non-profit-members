@@ -6,6 +6,56 @@ import {
 import { setPage } from '../main.js';
 import { cardHtml, cardShareSheet, shareSheet, statementSpec, receiptSpec, rosterSpec, createShareLink, txLabel } from '../print.js';
 
+// Private self-service link for a member: create, share, regenerate, revoke.
+export async function portalSheet(m) {
+  let { url } = await api(`members/${m.id}/portal`);
+  const render = (box) => {
+    const text = t('portal.share_text', { name: m.first_name, org: state.me.tenant.name });
+    const enc = encodeURIComponent(`${text}\n${url}`);
+    box.querySelector('.portal-body').innerHTML = url ? `
+      <label class="field"><span>${esc(t('portal.link'))}</span>
+        <div class="input-group"><input readonly value="${esc(url)}"><button type="button" class="btn btn-ghost" data-copy>${icon('copy')}</button></div></label>
+      <div class="share-apps">
+        ${m.phone ? `<a class="chip" target="_blank" rel="noopener" href="https://wa.me/${esc(m.phone.replace(/[^\d]/g, '').replace(/^69/, '3069'))}?text=${enc}">WhatsApp</a>
+        <a class="chip" href="sms:${esc(m.phone)}?&body=${enc}">SMS</a>` : `<a class="chip" target="_blank" rel="noopener" href="https://wa.me/?text=${enc}">WhatsApp</a>`}
+        <a class="chip" href="viber://forward?text=${enc}">Viber</a>
+        <a class="chip" href="mailto:${esc(m.email || '')}?subject=${encodeURIComponent(state.me.tenant.name)}&body=${enc}">Email</a>
+      </div>
+      <p class="muted small">${esc(t('portal.link_hint'))}</p>
+      <div class="action-bar"><button class="btn btn-ghost btn-sm" data-regen>${icon('qr')}<span>${esc(t('portal.regenerate'))}</span></button>
+        <button class="btn btn-danger-ghost btn-sm" data-revoke>${icon('x')}<span>${esc(t('portal.revoke'))}</span></button></div>`
+      : `<p class="lead">${esc(t('portal.none'))}</p><button class="btn btn-primary" data-create>${icon('portal')}<span>${esc(t('portal.create'))}</span></button>`;
+  };
+  modal({
+    title: `${t('portal.title')} · ${fullName(m)}`,
+    body: `<p class="muted">${esc(t('portal.explain'))}</p><div class="portal-body"></div>`,
+    onOpen: (box) => {
+      render(box);
+      box.addEventListener('click', async (e) => {
+        try {
+          if (e.target.closest('[data-copy]')) {
+            await navigator.clipboard.writeText(url).catch(() => {});
+            toast(t('share.copied'));
+          }
+          if (e.target.closest('[data-create]')) ({ url } = await api(`members/${m.id}/portal`, { method: 'POST' }));
+          if (e.target.closest('[data-regen]')) {
+            if (!(await confirmDialog(t('portal.regen_confirm')))) return;
+            ({ url } = await api(`members/${m.id}/portal`, { method: 'POST', query: { regenerate: 1 } }));
+          }
+          if (e.target.closest('[data-revoke]')) {
+            if (!(await confirmDialog(t('portal.revoke_confirm'), { danger: true, ok: t('portal.revoke') }))) return;
+            await api(`members/${m.id}/portal`, { method: 'DELETE' });
+            url = null;
+          }
+          if (e.target.closest('[data-create],[data-regen],[data-revoke]')) render(box);
+        } catch (err) {
+          toast(errText(err), 'err');
+        }
+      });
+    },
+  });
+}
+
 // ---------- list ----------
 const listState = { q: '', status: 'active', type: '', sort: 'name', only: '' };
 
@@ -136,6 +186,7 @@ export async function detail(el, { id }, stale) {
         ${can('staff') ? `<a class="btn btn-primary" href="#/payments/new?member=${m.id}">${icon('wallet')}<span>${esc(t('pay.record'))}</span></a>` : ''}
         <button class="btn btn-ghost" data-card>${icon('card')}<span>${esc(t('card.title'))}</span></button>
         <button class="btn btn-ghost" data-statement>${icon('receipt')}<span>${esc(t('doc.statement'))}</span></button>
+        ${can('staff') ? `<button class="btn btn-ghost" data-portal>${icon('portal')}<span>${esc(t('portal.title'))}</span></button>` : ''}
         ${can('admin') ? `<button class="btn btn-ghost" data-charge>${icon('plus')}<span>${esc(t('tx.add_charge'))}</span></button>` : ''}
       </div>
     </section>
@@ -174,6 +225,7 @@ export async function detail(el, { id }, stale) {
       return;
     }
     if (e.target.closest('[data-charge]')) return chargeDialog(m, refresh);
+    if (e.target.closest('[data-portal]')) return portalSheet(m);
     const tx = e.target.closest('[data-tx]');
     if (tx) return txDialog(m, txs.find((x) => x.id === +tx.dataset.tx), refresh);
     if (e.target.closest('[data-regen]')) {
@@ -197,7 +249,8 @@ export function txRows(txs) {
       <span class="tx-ic ${x.amount < 0 ? 'in' : 'out'}">${icon(x.amount < 0 ? 'wallet' : x.type === 'initial' ? 'scale' : 'calendar')}</span>
       <span class="row-main"><b>${esc(txLabel(x))}</b><small>${esc(fmtDate(x.date))}${x.method ? ` · ${esc(t(`method.${x.method}`))}` : ''}${x.receipt_no ? ` · #${x.receipt_no}` : ''}${x.description ? ` · ${esc(x.description)}` : ''}</small></span>
       <span class="row-end"><b class="${x.amount < 0 ? 'amount-in' : 'amount-out'}">${x.amount < 0 ? '−' : '+'}${esc(money(Math.abs(x.amount)))}</b>
-        ${x.status !== 'confirmed' ? `<span class="pill ${x.status === 'pending' ? 'pill-warn' : ''}">${esc(t(`txstatus.${x.status}`))}</span>` : ''}</span>
+        ${x.status !== 'confirmed' ? `<span class="pill ${x.status === 'pending' ? 'pill-warn' : ''}">${esc(t(`txstatus.${x.status}`))}</span>` : ''}
+        ${x.source === 'member' ? `<span class="pill">${esc(t('portal.from_member'))}</span>` : ''}</span>
     </button></li>`)
     .join('');
 }
@@ -218,6 +271,9 @@ export async function txDialog(member, tx, refresh) {
       ${tx.reference ? `<div><dt>${esc(t('tx.reference'))}</dt><dd>${esc(tx.reference)}</dd></div>` : ''}
       ${tx.receipt_no ? `<div><dt>${esc(t('doc.receipt'))}</dt><dd>#${esc(tx.receipt_no)}</dd></div>` : ''}
       ${tx.description ? `<div><dt>${esc(t('tx.description'))}</dt><dd>${esc(tx.description)}</dd></div>` : ''}
+      ${tx.note ? `<div><dt>${esc(t('portal.note'))}</dt><dd>${esc(tx.note)}</dd></div>` : ''}
+      ${tx.source === 'member' ? `<div><dt>${esc(t('portal.source'))}</dt><dd>${esc(t('portal.from_member'))}</dd></div>` : ''}
+      ${tx.proof_key ? `<div><dt>${esc(t('portal.proof'))}</dt><dd><a class="link" href="/api/transactions/${tx.id}/proof" target="_blank" rel="noopener">${icon('paperclip')} ${esc(t('portal.view_proof'))}</a></dd></div>` : ''}
     </dl>`,
     actions,
   });

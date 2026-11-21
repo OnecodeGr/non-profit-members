@@ -50,6 +50,7 @@ export async function publicCard(app, token) {
         ${valid ? `<p class="${m.in_good_standing ? 'good' : 'warn'}">${icon(m.in_good_standing ? 'check' : 'clock')} ${esc(m.in_good_standing ? t('bal.good_standing') : t('verify.dues'))}</p>` : ''}
       </section>
       <section class="card-preview">${cardHtml({ ...m, qr_token: token }, tn)}</section>
+      ${walletButtons(data.wallet, token)}
       <section class="panel pad pub-member">
         ${m.photo ? `<img class="pub-photo" src="${esc(m.photo)}" alt="">` : ''}
         <dl class="info-list">
@@ -108,6 +109,178 @@ export async function publicShare(app, token) {
       }
     };
     app.querySelector('[data-print]').onclick = () => printDoc(spec, tn);
+  };
+  draw();
+}
+
+// ---------- member self-service portal (/m/<token>) ----------
+function walletButtons(wallet, qrToken) {
+  if (!wallet || (!wallet.apple && !wallet.google)) return '';
+  return `<div class="wallet-buttons">
+    ${wallet.apple ? `<a class="wallet-btn" href="/api/public/wallet/apple/${esc(qrToken)}">${icon('card')}<span><small>${esc(t('wallet.add_to'))}</small>Apple Wallet</span></a>` : ''}
+    ${wallet.google ? `<a class="wallet-btn" href="/api/public/wallet/google/${esc(qrToken)}" target="_blank" rel="noopener">${icon('card')}<span><small>${esc(t('wallet.add_to'))}</small>Google Wallet</span></a>` : ''}
+  </div>`;
+}
+export { walletButtons };
+
+export async function memberPortal(app, token) {
+  app.innerHTML = `<div class="splash">${loading()}</div>`;
+  let data;
+  const load = async () => {
+    data = await api(`portal/${token}`);
+  };
+  try {
+    await load();
+  } catch (e) {
+    app.innerHTML = `<div class="public"><div class="panel pad center">${icon('clock')}<p>${esc(e.code === 'link_expired' ? t('portal.invalid') : errText(e))}</p></div>${credit()}</div>`;
+    return;
+  }
+  if (!hasStoredLang()) setLang(data.tenant.default_lang || 'el', false);
+  const { money: fmtMoney, readImage, parseAmount, todayIso, fmtDate: fd, toast, formData } = await import('../core.js');
+  const { cardsPdf } = await import('../export.js');
+  const { statementSpec, receiptSpec, txLabel } = await import('../print.js');
+
+  const draw = () => {
+    const { tenant: tn, member: m, transactions: txs } = data;
+    const cur = (c) => fmtMoney(c, tn.currency);
+    document.title = `${fullName(m)} · ${tn.name}`;
+    const receipts = txs.filter((x) => x.type === 'payment' && x.status === 'confirmed').reverse();
+    const pendingTx = txs.filter((x) => x.status === 'pending');
+    const ref = `${t('portal.ref_prefix')} №${m.member_no} ${m.last_name}`;
+    app.innerHTML = `
+    <div class="public portal">
+      <header class="pub-head">${tn.logo ? `<img src="${esc(tn.logo)}" alt="">` : `<span class="brand-mono">${esc(tn.name.slice(0, 1))}</span>`}<span>${esc(tn.name)}</span></header>
+      <section class="portal-hello">
+        <span class="eyebrow">${esc(t('portal.eyebrow'))}</span>
+        <h1 class="display">${esc(t('portal.hello', { name: m.first_name }))}</h1>
+      </section>
+      <section class="balance-box ${m.balance > 0 ? 'owe' : m.balance < 0 ? 'credit' : 'zero'}">
+        <span class="eyebrow">${esc(m.balance > 0 ? t('bal.owed') : m.balance < 0 ? t('bal.credit') : t('bal.balance'))}</span>
+        <span class="balance-value">${esc(cur(Math.abs(m.balance)))}</span>
+        <small>${m.pending ? esc(t('pay.pending_amount', { amount: cur(m.pending) })) : esc(m.balance <= 0 ? t('bal.good_standing') : t('portal.please_pay'))}</small>
+      </section>
+      <section class="card-preview">${cardHtml({ ...m }, tn)}</section>
+      ${walletButtons(data.wallet, m.qr_token)}
+      <div class="action-bar center"><button class="btn btn-ghost" data-card-pdf>${icon('download')}<span>${esc(t('portal.card_pdf'))}</span></button>
+        <button class="btn btn-ghost" data-statement>${icon('receipt')}<span>${esc(t('portal.statement_pdf'))}</span></button></div>
+
+      ${tn.bank_iban ? `<section class="panel portal-bank">
+        <div class="panel-head"><h3>${esc(t('portal.pay_title'))}</h3></div>
+        <div class="pad">
+          <p class="muted small">${esc(t('portal.pay_text'))}</p>
+          <dl class="info-list">
+            ${tn.bank_beneficiary ? `<div><dt>${esc(t('portal.beneficiary'))}</dt><dd>${esc(tn.bank_beneficiary)}</dd></div>` : ''}
+            ${tn.bank_name ? `<div><dt>${esc(t('portal.bank'))}</dt><dd>${esc(tn.bank_name)}</dd></div>` : ''}
+            <div><dt>IBAN</dt><dd class="copyable"><code>${esc(tn.bank_iban)}</code><button class="icon-btn" data-copy="${esc(tn.bank_iban.replace(/\s/g, ''))}">${icon('copy')}</button></dd></div>
+            <div><dt>${esc(t('portal.reference'))}</dt><dd class="copyable"><code>${esc(ref)}</code><button class="icon-btn" data-copy="${esc(ref)}">${icon('copy')}</button></dd></div>
+            ${m.balance > 0 ? `<div><dt>${esc(t('tx.amount'))}</dt><dd><b>${esc(cur(m.balance))}</b></dd></div>` : ''}
+          </dl>
+        </div>
+      </section>` : ''}
+
+      <section class="panel">
+        <div class="panel-head"><h3>${esc(t('portal.report_title'))}</h3></div>
+        <form class="form pad portal-pay" novalidate>
+          <p class="muted small">${esc(t('portal.report_text'))}</p>
+          <div class="grid-2">
+            <label class="field"><span>${esc(t('tx.amount'))} *</span><input name="amount" inputmode="decimal" required placeholder="0,00" value="${m.balance > 0 ? esc((m.balance / 100).toFixed(2).replace('.', ',')) : ''}"></label>
+            <label class="field"><span>${esc(t('portal.paid_on'))}</span><input type="date" name="date" value="${todayIso()}"></label>
+          </div>
+          <label class="field"><span>${esc(t('portal.bank_ref'))}</span><input name="reference" placeholder="${esc(t('pay.reference_placeholder'))}"></label>
+          <label class="field"><span>${esc(t('portal.note'))}</span><input name="note"></label>
+          ${data.proofs_enabled ? `<label class="field"><span>${esc(t('portal.proof'))}</span><input type="file" name="proof" accept="image/*,application/pdf"><small class="muted">${esc(t('portal.proof_hint'))}</small></label>` : ''}
+          <p class="alert" hidden></p>
+          <button class="btn btn-primary btn-lg btn-block" type="submit">${icon('check')}<span>${esc(t('portal.send'))}</span></button>
+        </form>
+      </section>
+
+      ${pendingTx.length ? `<section class="panel"><div class="panel-head"><h3>${esc(t('portal.pending'))}</h3></div><ul class="rows">${pendingTx.map((x) => `<li class="row">
+        <span class="row-main"><b>${esc(cur(-x.amount))}</b><small>${esc(fd(x.date))}${x.reference ? ` · ${esc(x.reference)}` : ''}</small></span><span class="pill pill-warn">${esc(t('txstatus.pending'))}</span></li>`).join('')}</ul></section>` : ''}
+
+      <section class="panel">
+        <div class="panel-head"><h3>${esc(t('tx.history'))}</h3></div>
+        <ul class="rows">${txs.filter((x) => x.status === 'confirmed').reverse().map((x) => `<li class="row">
+          <span class="row-main"><b>${esc(txLabel(x))}</b><small>${esc(fd(x.date))}${x.receipt_no ? ` · #${x.receipt_no}` : ''}</small></span>
+          <span class="row-end"><b class="${x.amount < 0 ? 'amount-in' : 'amount-out'}">${x.amount < 0 ? '−' : '+'}${esc(cur(Math.abs(x.amount)))}</b>
+          ${x.receipt_no ? `<button class="link" data-receipt="${x.id}">${esc(t('doc.receipt'))}</button>` : ''}</span></li>`).join('') || `<li class="muted pad">${esc(t('tx.none'))}</li>`}</ul>
+      </section>
+
+      ${data.events.length ? `<section class="panel"><div class="panel-head"><h3>${esc(t('nav.events'))}</h3></div><ul class="rows">${data.events.map((e) => `<li class="row">
+        <span class="row-main"><b>${esc(e.title)}</b><small>${esc(fd(e.date))}${e.location ? ` · ${esc(e.location)}` : ''}</small></span>
+        ${e.checked_at ? `<span class="pill pill-ok">${esc(t('ev.attended'))}</span>` : ''}</li>`).join('')}</ul></section>` : ''}
+      <p class="muted small center">${esc(t('portal.private'))}</p>
+      ${credit()}
+    </div>`;
+    app.querySelector('.public').prepend(langBar(draw));
+
+    const statementMember = { ...m, type_name: m.type_name };
+    app.querySelector('[data-statement]').onclick = async (e) => {
+      const b = e.currentTarget;
+      b.classList.add('busy');
+      try {
+        const spec = statementSpec(statementMember, txs, tn);
+        await shareFile(await docPdf(spec, tn), `${spec.filename.replace(/[^\p{L}\p{N}_-]+/gu, '_')}.pdf`, spec.title);
+      } finally {
+        b.classList.remove('busy');
+      }
+    };
+    app.querySelector('[data-card-pdf]').onclick = async (e) => {
+      const b = e.currentTarget;
+      b.classList.add('busy');
+      try {
+        await shareFile(await cardsPdf([m], 'cr80', tn), `card_${m.member_no}.pdf`, tn.name);
+      } finally {
+        b.classList.remove('busy');
+      }
+    };
+    app.querySelectorAll('[data-receipt]').forEach((b) => (b.onclick = async () => {
+      const tx = txs.find((x) => x.id === +b.dataset.receipt);
+      const spec = receiptSpec(statementMember, tx, tn);
+      await shareFile(await docPdf(spec, tn), `${spec.filename.replace(/[^\p{L}\p{N}_-]+/gu, '_')}.pdf`, spec.title);
+    }));
+    app.querySelectorAll('[data-copy]').forEach((b) => (b.onclick = async () => {
+      await navigator.clipboard.writeText(b.dataset.copy).catch(() => {});
+      toast(t('share.copied'));
+    }));
+    const form = app.querySelector('.portal-pay');
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const alert = form.querySelector('.alert');
+      alert.hidden = true;
+      const d = formData(form);
+      const amount = parseAmount(d.amount);
+      if (!amount || Number.isNaN(amount) || amount < 0) {
+        alert.textContent = t('err.invalid_amount');
+        alert.hidden = false;
+        return;
+      }
+      const btn = form.querySelector('[type=submit]');
+      btn.classList.add('busy');
+      try {
+        let proof;
+        const file = form.proof?.files?.[0];
+        if (file) {
+          if (file.type === 'application/pdf') {
+            if (file.size > 6 * 1024 * 1024) throw Object.assign(new Error(), { code: 'proof_too_large' });
+            proof = await new Promise((res, rej) => {
+              const fr = new FileReader();
+              fr.onload = () => res(fr.result);
+              fr.onerror = rej;
+              fr.readAsDataURL(file);
+            });
+          } else proof = await readImage(file, 1800, 'image/jpeg');
+        }
+        await api(`portal/${token}/payment`, { method: 'POST', body: { amount, date: d.date, reference: d.reference, note: d.note, proof } });
+        await load();
+        draw();
+        toast(t('portal.sent'));
+        app.querySelector('.portal-pay').closest('.panel').insertAdjacentHTML('afterbegin', `<p class="lp-ok">${esc(t('portal.sent_long'))}</p>`);
+      } catch (err) {
+        alert.textContent = errText(err);
+        alert.hidden = false;
+        btn.classList.remove('busy');
+      }
+    };
   };
   draw();
 }

@@ -41,7 +41,7 @@ function mime({ from, fromName, to, replyTo, subject, text }) {
   ].filter((l, i, a) => l !== '' || i === a.length - 2).join('\r\n');
 }
 
-async function sendMail(env, msg) {
+export async function sendMail(env, msg) {
   // 1) Cloudflare Email Routing "send_email" binding (preferred, no third party).
   if (env.SEND_EMAIL) {
     const { EmailMessage } = await import('cloudflare:email');

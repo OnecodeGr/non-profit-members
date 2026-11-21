@@ -26,7 +26,9 @@ export async function payments(el, _p, stale) {
     ${pending.rows.length ? `<ul class="rows">${pending.rows.map((x) => `<li class="row pending-row">
         ${admin ? `<input type="checkbox" data-id="${x.id}" aria-label="${esc(t('common.select'))}">` : ''}
         <a class="row-main" href="#/members/${x.member_id}"><b>${esc(fullName(x))} <small class="muted">№ ${x.member_no}</small></b>
-          <small>${esc(fmtDate(x.date))} · ${esc(t(`method.${x.method || 'other'}`))}${x.reference ? ` · ${esc(x.reference)}` : ''}${x.created_by_name ? ` · ${esc(x.created_by_name)}` : ''}</small></a>
+          <small>${esc(fmtDate(x.date))} · ${esc(t(`method.${x.method || 'other'}`))}${x.reference ? ` · ${esc(x.reference)}` : ''}${x.source === 'member' ? ` · ${esc(t('portal.from_member'))}` : x.created_by_name ? ` · ${esc(x.created_by_name)}` : ''}</small>
+          ${x.note ? `<small class="muted">“${esc(x.note)}”</small>` : ''}</a>
+        ${x.proof_key ? `<a class="icon-btn" href="/api/transactions/${x.id}/proof" target="_blank" rel="noopener" title="${esc(t('portal.view_proof'))}">${icon('paperclip')}</a>` : ''}
         <span class="row-end"><b class="amount-in">${esc(money(-x.amount))}</b>
           ${admin ? `<span class="row-btns"><button class="icon-btn ok" data-confirm="${x.id}" title="${esc(t('pay.confirm'))}">${icon('check')}</button>
           <button class="icon-btn no" data-reject="${x.id}" title="${esc(t('pay.reject'))}">${icon('x')}</button></span>` : ''}</span>

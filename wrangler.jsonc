@@ -29,10 +29,19 @@
     // Suggestion channels shown on the "Suggestion" button (leave empty to hide a channel).
     "CONTACT_WHATSAPP": "",
     "CONTACT_TELEGRAM": "",
-    "CONTACT_VIBER": ""
+    "CONTACT_VIBER": "",
+    // Google Wallet issuer id (numbers). Service account JSON goes in: wrangler secret put GOOGLE_WALLET_SERVICE_ACCOUNT
+    "GOOGLE_WALLET_ISSUER_ID": "",
+    // Apple Wallet: pass type id + team id. Certificates go in secrets APPLE_PASS_CERT, APPLE_PASS_KEY, APPLE_WWDR_CERT
+    "APPLE_PASS_TYPE_ID": "",
+    "APPLE_TEAM_ID": ""
   },
   // Contact form e-mails go out through Cloudflare Email Routing to this verified address.
   "send_email": [{ "name": "SEND_EMAIL", "destination_address": "sales@onecode.gr" }],
+  // Member payment proofs uploaded from the member portal.
+  "r2_buckets": [{ "binding": "PROOFS", "bucket_name": "members-proofs" }],
+  // Weekly billing digest e-mail to sales (Mondays 06:17 UTC).
+  "triggers": { "crons": ["17 6 * * 1"] },
   // Custom domain. The onecode.win zone must be on the same Cloudflare account.
   "routes": [{ "pattern": "members.onecode.win", "custom_domain": true }],
   "observability": { "enabled": true }

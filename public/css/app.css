@@ -649,3 +649,70 @@ input[type=date] { min-width: 0; }
 .preview .table th, .preview .table td { padding: 9px 8px; }
 .switch { position: relative; }
 .switch input, .seg input { width: 1px; height: 1px; min-height: 0; padding: 0; border: 0; left: 0; top: 0; }
+
+/* ---------- events ---------- */
+.date-chip { display: grid; place-items: center; width: 46px; height: 50px; border: 1px solid var(--line-2); flex: none; line-height: 1.05; }
+.date-chip b { font: 500 1.3rem var(--serif); }
+.date-chip small { font-size: .62rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--gold-deep); }
+.event-head { display: grid; gap: 18px; padding: 22px; border-top: 2px solid var(--gold); }
+.event-head .display { font-size: clamp(1.5rem, 4vw, 2.1rem); }
+@media (min-width: 1000px) { .event-head { grid-template-columns: 1fr auto; align-items: center; } .event-head .action-bar { grid-column: 1 / -1; } }
+.quorum-box { display: grid; gap: 4px; min-width: 240px; padding: 14px 18px; background: var(--paper-2); border-left: 2px solid var(--warn); }
+.quorum-box.met { border-left-color: var(--ok); }
+.quorum-box .eyebrow { margin: 0; color: var(--muted); }
+.quorum-value { font: 500 2.4rem/1.05 var(--serif); }
+.quorum-value small { font-size: 1.2rem; color: var(--muted); }
+.quorum-verdict { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: .85rem; color: var(--warn); }
+.quorum-box.met .quorum-verdict { color: var(--ok); }
+.quorum-verdict .ic { width: 16px; height: 16px; }
+.quorum-box .meter { position: relative; height: 4px; margin: 6px 0 2px; }
+.quorum-box .meter i { position: absolute; top: -4px; width: 1px; height: 12px; background: var(--ink); }
+.checkin-grid { display: grid; gap: 16px; }
+@media (min-width: 900px) { .checkin-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } }
+.checkin-side { display: grid; gap: 14px; }
+.scan-card.warnc { border-top-color: var(--warn); }
+.scan-card.warnc .verdict { color: var(--warn); }
+.pill-bad { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 40%, transparent); background: var(--bad-bg); }
+.doc-table.tall td { height: 11mm; vertical-align: middle; }
+
+/* ---------- subscription ---------- */
+.sub-banner { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: var(--warn-bg); color: var(--warn); border-bottom: 1px solid color-mix(in srgb, var(--warn) 30%, transparent); font-size: .88rem; font-weight: 600; }
+.sub-banner.bad { background: var(--bad-bg); color: var(--bad); }
+.sub-banner > span { flex: 1; }
+.sub-banner .icon-btn { color: inherit; width: 30px; height: 30px; }
+@media (min-width: 900px) { .sub-banner { padding: 10px 32px; } }
+.sub-panel { display: grid; gap: 14px; padding: 16px 20px; border-left: 2px solid var(--ok); }
+.sub-panel.warn { border-left-color: var(--warn); }
+.sub-panel.bad { border-left-color: var(--bad); }
+.sub-col { display: grid; gap: 2px; }
+.sub-col .eyebrow { margin: 0; color: var(--muted); }
+.sub-col b { font: 500 1.2rem var(--serif); }
+.meter.hot span { background: var(--warn); }
+@media (min-width: 760px) { .sub-panel { grid-template-columns: 1.2fr 1fr auto; align-items: center; } }
+
+/* ---------- wallet + portal ---------- */
+.wallet-buttons { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.wallet-btn { display: inline-flex; align-items: center; gap: 10px; padding: 8px 18px 8px 14px; background: #000; color: #fff; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 1rem; min-width: 190px; border: 1px solid #333; }
+.wallet-btn span { display: grid; line-height: 1.15; }
+.wallet-btn small { font-size: .68rem; font-weight: 500; opacity: .8; }
+.wallet-btn .ic { width: 26px; height: 26px; color: var(--gold); }
+.portal-hello { text-align: center; }
+.portal .balance-box { text-align: center; justify-items: center; }
+.copyable { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.copyable code { font-size: .9rem; word-break: break-all; }
+.copyable .icon-btn { width: 32px; height: 32px; }
+.portal-pay { padding: 18px 20px; }
+.portal .lp-ok { margin: 16px 20px 0; }
+
+/* ---------- audit / export ---------- */
+.export-box { display: grid; gap: 12px; border-top: 2px solid var(--gold); }
+@media (min-width: 760px) { .export-box { grid-template-columns: 1fr auto; align-items: center; } }
+.audit-row { align-items: flex-start; cursor: default; }
+.audit-row .row-main b { white-space: normal; font-weight: 600; font-size: .9rem; }
+.audit-det { white-space: normal !important; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .74rem !important; color: var(--ink-2) !important; overflow-wrap: anywhere; }
+
+/* ---------- admin billing ---------- */
+.billing-stats .stat { cursor: default; }
+.bill-now { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.bill-total { margin: 0; font-size: .9rem; padding: 10px 12px; background: var(--paper-2); border-left: 2px solid var(--gold); }
+.tenant-list .row-end { gap: 4px; }

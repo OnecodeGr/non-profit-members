@@ -26,6 +26,7 @@ const NAV = [
   { path: '/members', icon: 'users', key: 'nav.members', tab: true },
   { path: '/scan', icon: 'scan', key: 'nav.scan', tab: true, center: true },
   { path: '/payments', icon: 'wallet', key: 'nav.payments', tab: true },
+  { path: '/events', icon: 'ticket', key: 'nav.events' },
   { path: '/transactions', icon: 'list', key: 'nav.transactions' },
   { path: '/reports', icon: 'chart', key: 'nav.reports' },
   { path: '/debits', icon: 'calendar', key: 'nav.debits', role: 'admin' },
@@ -89,7 +90,7 @@ function markNav(path) {
   const top = `/${path.split('/')[1] || ''}`;
   for (const a of document.querySelectorAll('[data-path]')) {
     const p = a.dataset.path;
-    a.classList.toggle('active', p === top || (p === '/more' && ['/transactions', '/reports', '/debits', '/initial', '/import', '/settings', '/cards'].includes(top)));
+    a.classList.toggle('active', p === top || (p === '/more' && ['/transactions', '/reports', '/debits', '/initial', '/import', '/settings', '/cards', '/events'].includes(top)));
   }
 }
 
@@ -136,11 +137,38 @@ function registerRoutes() {
   route('/reports', lazy('reports', 'reports'));
   route('/cards', lazy('reports', 'cards'));
   route('/settings', lazy('settings', 'settings'));
+  route('/events', lazy('events', 'events'));
+  route('/events/:id', lazy('events', 'eventDetail'));
   route('/more', lazy('settings', 'more'));
+}
+
+function subscriptionBanner() {
+  const s = state.me.subscription;
+  if (!s || !can('admin')) return;
+  let key = null;
+  if (s.status === 'expired') key = 'sub.banner_expired';
+  else if (s.status === 'grace') key = 'sub.banner_grace';
+  else if (s.status === 'expiring') key = 'sub.banner_expiring';
+  else if (s.over_limit) key = 'sub.banner_over';
+  else if (s.near_limit) key = 'sub.banner_near';
+  if (!key) return;
+  try {
+    if (sessionStorage.getItem(`dismiss:${key}`) && !['sub.banner_expired', 'sub.banner_grace'].includes(key)) return;
+  } catch { /* ignore */ }
+  const el = document.createElement('div');
+  el.className = `sub-banner ${['sub.banner_expired', 'sub.banner_grace', 'sub.banner_over'].includes(key) ? 'bad' : ''}`;
+  el.innerHTML = `${icon('clock')}<span>${esc(t(key, { days: Math.abs(s.days_left ?? 0), grace: s.grace_days + (s.days_left ?? 0), count: s.member_count, limit: s.member_limit }))}</span>
+    <button class="link" data-suggest>${esc(t('sub.contact'))}</button><button class="icon-btn" data-dismiss aria-label="${esc(t('common.close'))}">${icon('x')}</button>`;
+  el.querySelector('[data-dismiss]').onclick = () => {
+    try { sessionStorage.setItem(`dismiss:${key}`, '1'); } catch { /* ignore */ }
+    el.remove();
+  };
+  $('.topbar').after(el);
 }
 
 async function startTenantApp() {
   shell();
+  subscriptionBanner();
   render();
 }
 
@@ -176,9 +204,10 @@ async function boot(keepView = false) {
     const m = await import('./views/admin.js');
     return m.adminApp(app);
   }
-  const pub = path.match(/^\/(c|s)\/([^/]+)$/);
+  const pub = path.match(/^\/(c|s|m)\/([^/]+)$/);
   if (pub) {
     const m = await import('./views/public.js');
+    if (pub[1] === 'm') return m.memberPortal(app, pub[2]);
     return pub[1] === 'c' ? m.publicCard(app, pub[2]) : m.publicShare(app, pub[2]);
   }
   if (!state.me || !keepView) {

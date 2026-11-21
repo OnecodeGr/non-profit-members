@@ -203,6 +203,7 @@ export async function docPdf(spec, tenant = state.me.tenant) {
       styles: { font: 'Sans', fontSize: 8.5, textColor: [29, 27, 24], cellPadding: { top: 2, bottom: 2, left: 2.5, right: 2.5 }, lineWidth: 0, overflow: 'ellipsize' },
       headStyles: { fillColor: INK, textColor: [233, 217, 182], fontStyle: 'bold', fontSize: 7.5 },
       alternateRowStyles: { fillColor: [246, 241, 232] },
+      bodyStyles: spec.tall ? { minCellHeight: 10, valign: 'middle' } : {},
       columnStyles,
       didParseCell: (d) => {
         if (d.section === 'head') d.cell.styles.halign = columnStyles[d.column.index].halign;
@@ -357,6 +358,11 @@ function crc32(bytes) {
   let c = 0xffffffff;
   for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xff] ^ (c >>> 8);
   return (c ^ 0xffffffff) >>> 0;
+}
+
+export function zipFiles(files, type) {
+  const b = zip(files);
+  return type ? new Blob([b], { type }) : b;
 }
 
 function zip(files) {

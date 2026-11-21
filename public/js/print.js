@@ -97,7 +97,7 @@ export function docHtml(spec, tenant = state.me.tenant) {
     <h1 class="doc-title">${esc(spec.title)}</h1>
     ${(spec.subtitle || []).map((s) => `<p class="doc-sub">${esc(s)}</p>`).join('')}
     ${spec.meta?.length ? `<dl class="doc-meta">${spec.meta.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>` : ''}
-    ${cols.length ? `<table class="doc-table"><thead><tr>${cols.map((c) => `<th class="${c.align === 'right' ? 'r' : ''}">${esc(c.label)}</th>`).join('')}</tr></thead>
+    ${cols.length ? `<table class="doc-table${spec.tall ? ' tall' : ''}"><thead><tr>${cols.map((c) => `<th class="${c.align === 'right' ? 'r' : ''}">${esc(c.label)}</th>`).join('')}</tr></thead>
     <tbody>${spec.rows.map((r) => `<tr>${r.map((v, i) => `<td class="${cols[i].align === 'right' ? 'r' : ''}">${esc(cellText(cols[i], v, tenant.currency))}</td>`).join('')}</tr>`).join('')}</tbody></table>` : ''}
     ${spec.totals?.length ? `<dl class="doc-totals">${spec.totals.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>` : ''}
     ${spec.note ? `<p class="doc-note">${esc(spec.note)}</p>` : ''}
@@ -284,7 +284,7 @@ export function statementSpec(member, txs, tenant = state.me?.tenant) {
     run += x.amount;
     rows.push([
       fmtDate(x.date),
-      [txLabel(x), x.description, x.receipt_no ? `#${x.receipt_no}` : ''].filter(Boolean).join(' · '),
+      [txLabel(x), x.description !== txLabel(x) ? x.description : '', x.receipt_no ? `#${x.receipt_no}` : ''].filter(Boolean).join(' · '),
       x.amount > 0 ? x.amount : '',
       x.amount < 0 ? -x.amount : '',
       run,
