@@ -14,8 +14,7 @@
     {
       "binding": "DB",
       "database_name": "members-db",
-      // Replace with the id printed by: npx wrangler d1 create members-db
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "319a98f4-a2e8-4dfa-b289-87b294bddc65",
       "migrations_dir": "migrations"
     }
   ],
@@ -38,8 +37,10 @@
   },
   // Contact form e-mails go out through Cloudflare Email Routing to this verified address.
   "send_email": [{ "name": "SEND_EMAIL", "destination_address": "sales@onecode.gr" }],
-  // Member payment proofs uploaded from the member portal.
-  "r2_buckets": [{ "binding": "PROOFS", "bucket_name": "members-proofs" }],
+  // Member payment proofs (photo/PDF) uploaded from the member portal. Optional: without this
+  // binding the app works and the proof-upload field is hidden. To enable: activate R2 in the
+  // Cloudflare dashboard, run `npx wrangler r2 bucket create members-proofs`, then uncomment:
+  // "r2_buckets": [{ "binding": "PROOFS", "bucket_name": "members-proofs" }],
   // Weekly billing digest e-mail to sales (Mondays 06:17 UTC).
   "triggers": { "crons": ["17 6 * * 1"] },
   // Custom domain. The onecode.win zone must be on the same Cloudflare account.

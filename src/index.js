@@ -39,7 +39,7 @@ export default {
     if (path.startsWith('/api/')) {
       let res;
       try {
-        res = await api(req, env, path);
+        res = (await api(req, env, path)) || json({ error: 'not_found' }, 404);
       } catch (e) {
         if (e instanceof HttpError) res = json({ error: e.code, message: e.message }, e.status);
         else {

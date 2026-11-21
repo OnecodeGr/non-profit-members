@@ -37,11 +37,9 @@ npm run dev                        # http://localhost:8787  (admin panel: /admin
 
 ## Deploying to Cloudflare
 
-1. Create the database and put its id into `wrangler.jsonc` (`database_id`):
-   ```bash
-   npx wrangler d1 create members-db
-   npm run db:migrate
-   ```
+1. Database: `members-db` already exists on the ONECODE Support account with all migrations applied,
+   and its id is in `wrangler.jsonc`. For future schema changes run `npm run db:migrate`
+   (or set the Workers Builds deploy command to `npx wrangler d1 migrations apply members-db --remote && npx wrangler deploy`).
 2. Secrets:
    ```bash
    npx wrangler secret put ADMIN_USERNAME
@@ -55,7 +53,8 @@ npm run dev                        # http://localhost:8787  (admin panel: /admin
    enable Email Routing on the sender domain of `MAIL_FROM` (default `noreply@onecode.win`) and add
    `sales@onecode.gr` as a **verified destination address**. Messages are always stored in the
    `contact_messages` table even if delivery fails. (Optional fallback: set a `RESEND_API_KEY` secret.)
-5. Payment proofs: create the R2 bucket `npx wrangler r2 bucket create members-proofs`.
+5. Payment proofs (optional): activate R2 in the Cloudflare dashboard (R2 → Get started), run
+   `npx wrangler r2 bucket create members-proofs`, and uncomment the `r2_buckets` line in `wrangler.jsonc`.
 6. Wallet passes (optional — buttons stay hidden until configured):
    - **Apple:** Apple Developer account → Identifiers → *Pass Type ID* (e.g. `pass.win.onecode.members`) → create its certificate, export as `.p12`, then:
      ```bash
