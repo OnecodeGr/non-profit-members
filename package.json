@@ -1,0 +1,24 @@
+{
+  "name": "members-onecode",
+  "version": "1.0.0",
+  "description": "Multi-tenant membership management (members, dues, QR cards, receipts) on Cloudflare Workers + D1",
+  "scripts": {
+    "dev": "wrangler dev",
+    "db:migrate:local": "wrangler d1 migrations apply members-db --local",
+    "db:migrate": "wrangler d1 migrations apply members-db --remote",
+    "deploy": "wrangler deploy"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OnecodeGr/non-profit-members.git"
+  },
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/OnecodeGr/non-profit-members/issues"
+  },
+  "homepage": "https://github.com/OnecodeGr/non-profit-members#readme",
+  "devDependencies": {
+    "wrangler": "^4.166.0"
+  },
+  "private": true
+}

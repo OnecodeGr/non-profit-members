@@ -1,0 +1,39 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "members",
+  "main": "src/index.js",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*", "/", "/en", "/fr"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "members-db",
+      // Replace with the id printed by: npx wrangler d1 create members-db
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    "PUBLIC_URL": "https://members.onecode.win",
+    "SALES_EMAIL": "sales@onecode.gr",
+    // Sender address: must be on a domain with Cloudflare Email Routing enabled.
+    "MAIL_FROM": "noreply@onecode.win",
+    // Cloudflare Turnstile site key (public). The secret goes in: wrangler secret put TURNSTILE_SECRET
+    "TURNSTILE_SITE_KEY": "",
+    // Suggestion channels shown on the "Suggestion" button (leave empty to hide a channel).
+    "CONTACT_WHATSAPP": "",
+    "CONTACT_TELEGRAM": "",
+    "CONTACT_VIBER": ""
+  },
+  // Contact form e-mails go out through Cloudflare Email Routing to this verified address.
+  "send_email": [{ "name": "SEND_EMAIL", "destination_address": "sales@onecode.gr" }],
+  // Custom domain. The onecode.win zone must be on the same Cloudflare account.
+  "routes": [{ "pattern": "members.onecode.win", "custom_domain": true }],
+  "observability": { "enabled": true }
+}

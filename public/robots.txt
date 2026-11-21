@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Allow: /en
+Allow: /fr
+Disallow: /api/
+Disallow: /app
+Disallow: /admin
+Disallow: /c/
+Disallow: /s/
+
+Sitemap: https://members.onecode.win/sitemap.xml
