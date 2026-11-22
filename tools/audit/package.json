@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "@axe-core/playwright": "^4.10.0",
-    "html-validate": "^9.0.0",
+    "html-validate": "^11.21.1",
     "lighthouse": "^12.0.0"
   }
 }
