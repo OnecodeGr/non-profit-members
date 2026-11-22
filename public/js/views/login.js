@@ -16,9 +16,12 @@ export async function login(app, done) {
   const params = new URLSearchParams(location.search);
   const soc = (params.get('soc') || '').trim().toLowerCase();
   let tenant = null;
+  let demo = null; // demo organisations publish their sign-in so visitors can try the service
   if (soc) {
     try {
-      tenant = (await api('public/tenant', { query: { soc } })).tenant;
+      const info = await api('public/tenant', { query: { soc } });
+      tenant = info.tenant;
+      demo = info.demo;
       if (!store('lang')) setLang(tenant.default_lang || 'el', false);
     } catch {
       tenant = null;
@@ -49,10 +52,11 @@ export async function login(app, done) {
           <label class="field"><span>${esc(t('auth.tenant_key'))}</span>
             <div class="input-icon">${icon('key')}<input name="tenant_key" autocomplete="organization" autocapitalize="none" spellcheck="false" required value="${esc(soc || lastKey)}"></div></label>`}
           <label class="field"><span>${esc(t('auth.username'))}</span>
-            <div class="input-icon">${icon('users')}<input name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required></div></label>
+            <div class="input-icon">${icon('users')}<input name="username" autocomplete="${demo ? 'off' : 'username'}" autocapitalize="none" spellcheck="false" required value="${esc(demo?.username || '')}"></div></label>
           <label class="field"><span>${esc(t('auth.password'))}</span>
-            <div class="input-icon">${icon('shield')}<input name="password" type="password" autocomplete="current-password" required>
+            <div class="input-icon">${icon('shield')}<input name="password" type="password" autocomplete="${demo ? 'off' : 'current-password'}" required value="${esc(demo?.password || '')}">
             <button type="button" class="icon-btn reveal" aria-label="${esc(t('auth.show_password'))}">${icon('eye')}</button></div></label>
+          ${demo ? `<p class="note">${icon('sparkle')} ${esc(t('auth.demo_note'))}</p>` : ''}
           ${error ? `<p class="alert" role="alert">${esc(error)}</p>` : ''}
           <button class="btn btn-primary btn-lg btn-block" type="submit"><span>${esc(t('auth.login'))}</span></button>
         </form>
@@ -68,7 +72,8 @@ export async function login(app, done) {
       p.type = p.type === 'password' ? 'text' : 'password';
     };
     const form = app.querySelector('form');
-    (form.querySelector('[name=tenant_key]:not([type=hidden])') && !form.tenant_key.value ? form.tenant_key : form.username).focus();
+    if (demo) form.querySelector('[type=submit]').focus();
+    else (form.querySelector('[name=tenant_key]:not([type=hidden])') && !form.tenant_key.value ? form.tenant_key : form.username).focus();
     form.onsubmit = async (e) => {
       e.preventDefault();
       const d = formData(form);

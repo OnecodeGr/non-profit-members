@@ -209,7 +209,7 @@ async function adminHome(app, me) {
     const shown = tenants.filter((x) => match(x) && (!q || `${x.name} ${x.key} ${x.email} ${x.admin_username}`.toLowerCase().includes(q)));
     list.innerHTML = shown.map((x) => `<li><button class="row" data-id="${x.id}">
       <span class="tx-ic">${icon('building')}</span>
-      <span class="row-main"><b>${esc(x.name)} ${x.active ? '' : `<span class="pill">${esc(t('status.inactive'))}</span>`}</b>
+      <span class="row-main"><b>${esc(x.name)} ${x.active ? '' : `<span class="pill">${esc(t('status.inactive'))}</span>`}${x.is_demo ? ` <span class="pill pill-warn">${esc(t('admin.demo_badge'))}</span>` : ''}</b>
         <small>?soc=<b>${esc(x.key)}</b> · ${esc(x.admin_username || '—')} · ${esc(fmtDate(x.created_at))}</small></span>
       <span class="row-end">${subPill(x.subscription)}<small class="${x.subscription.over_limit ? 'warn' : 'muted'}">${x.active_count}${x.member_limit ? ` / ${x.member_limit}` : ''} ${esc(t('bill.members_short'))}</small></span>
       ${icon('chevron')}</button></li>`).join('') || `<li class="muted pad">${esc(t('admin.no_tenants'))}</li>`;
@@ -343,10 +343,28 @@ async function tenantDialog(x, reload) {
         <label class="field"><span>${esc(t('bill.limit'))}</span><input name="member_limit" type="number" min="1" value="${esc(x.member_limit ?? '')}" placeholder="${esc(t('bill.unlimited'))}"></label>
         <label class="field span-2"><span>${esc(t('bill.billing_email'))}</span><input type="email" name="billing_email" value="${esc(x.billing_email || '')}"></label>
       </div>
+      <h3 class="sub-title">${esc(t('admin.demo_title'))}</h3>
+      <label class="switch"><input type="checkbox" name="is_demo" ${x.is_demo ? 'checked' : ''}><span class="track"></span><span>${esc(t('admin.demo'))}<small class="muted">${esc(t('admin.demo_hint'))}</small></span></label>
+      <div class="grid-2 demo-creds">
+        <label class="field"><span>${esc(t('admin.demo_user'))}</span><input type="text" name="demo_username" value="${esc(x.demo_username || '')}" autocapitalize="none"></label>
+        <label class="field"><span>${esc(t('admin.demo_pass'))}</span><input type="text" name="demo_password" value="${esc(x.demo_password || '')}" autocapitalize="none"></label>
+      </div>
+      <label class="switch"><input type="checkbox" name="email_enabled" ${x.email_enabled !== 0 && !x.is_demo ? 'checked' : ''}><span class="track"></span><span>${esc(t('admin.email_enabled'))}<small class="muted">${esc(t('admin.email_hint'))}</small></span></label>
       <label class="switch"><input type="checkbox" name="active" ${x.active ? 'checked' : ''}><span class="track"></span><span>${esc(t('admin.active'))}<small class="muted">${esc(t('admin.active_hint'))}</small></span></label>
       <p class="muted small">${esc(t('admin.stats', { m: x.member_count, u: x.user_count }))} · ${esc(t('bill.active_members', { n: x.active_count }))}</p>
     </form>`,
-    onOpen: bindCopy,
+    onOpen: (box) => {
+      bindCopy(box);
+      const demoBox = box.querySelector('[name=is_demo]');
+      const sync = () => {
+        box.querySelector('.demo-creds').hidden = !demoBox.checked;
+        const mail = box.querySelector('[name=email_enabled]');
+        mail.disabled = demoBox.checked;
+        if (demoBox.checked) mail.checked = false;
+      };
+      demoBox.onchange = sync;
+      sync();
+    },
     actions: [
       { label: t('common.delete'), kind: 'danger-ghost', value: 'delete' },
       { label: t('admin.credentials'), kind: 'ghost', icon: 'key', value: 'creds' },

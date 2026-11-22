@@ -155,7 +155,8 @@ function subscriptionBanner() {
   try {
     if (sessionStorage.getItem(`dismiss:${key}`) && !['sub.banner_expired', 'sub.banner_grace'].includes(key)) return;
   } catch { /* ignore */ }
-  const el = document.createElement('div');
+  const el = document.createElement('aside');
+  el.setAttribute('aria-label', t('sub.title'));
   el.className = `sub-banner ${['sub.banner_expired', 'sub.banner_grace', 'sub.banner_over'].includes(key) ? 'bad' : ''}`;
   el.innerHTML = `${icon('clock')}<span>${esc(t(key, { days: Math.abs(s.days_left ?? 0), grace: s.grace_days + (s.days_left ?? 0), count: s.member_count, limit: s.member_limit }))}</span>
     <button class="link" data-suggest>${esc(t('sub.contact'))}</button><button class="icon-btn" data-dismiss aria-label="${esc(t('common.close'))}">${icon('x')}</button>`;
@@ -166,8 +167,18 @@ function subscriptionBanner() {
   $('.topbar').after(el);
 }
 
+function demoBanner() {
+  if (!state.me.tenant.is_demo) return;
+  const el = document.createElement('aside');
+  el.setAttribute('aria-label', t('admin.demo'));
+  el.className = 'sub-banner demo-banner';
+  el.innerHTML = `${icon('sparkle')}<span>${esc(t('demo.banner'))}</span><a class="link" href="/#contact">${esc(t('demo.cta'))}</a>`;
+  $('.topbar').after(el);
+}
+
 async function startTenantApp() {
   shell();
+  demoBanner();
   subscriptionBanner();
   render();
 }

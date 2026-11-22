@@ -530,6 +530,12 @@ const fr = {
 // ---------- Portal, wallet, events, audit, billing ----------
 const EXTRA = {
   el: {
+    'auth.demo_note': 'Λογαριασμός επίδειξης — τα στοιχεία είναι ήδη συμπληρωμένα. Πατήστε «Σύνδεση» και δοκιμάστε ελεύθερα.',
+    'demo.banner': 'Βρίσκεστε στον λογαριασμό επίδειξης. Δοκιμάστε ελεύθερα — τα δεδομένα είναι ενδεικτικά.', 'demo.cta': 'Θέλω δικό μου λογαριασμό',
+    'admin.demo_title': 'Επίδειξη & email', 'admin.demo': 'Λογαριασμός επίδειξης', 'admin.demo_hint': 'Τα στοιχεία εισόδου προσυμπληρώνονται στον σύνδεσμο ?soc=. Οι επισκέπτες δεν μπορούν να αλλάξουν συνθηματικό, χρήστες ή στοιχεία φορέα.',
+    'admin.demo_user': 'Προσυμπληρωμένο όνομα χρήστη', 'admin.demo_pass': 'Προσυμπληρωμένο συνθηματικό', 'admin.demo_badge': 'Demo',
+    'admin.email_enabled': 'Αποστολή email', 'admin.email_hint': 'Όταν είναι ανενεργό, η υπηρεσία δεν στέλνει κανένα email για αυτόν τον φορέα (πάντα ανενεργό για επίδειξη).',
+    'err.demo_locked': 'Δεν επιτρέπεται στον λογαριασμό επίδειξης.',
     'nav.events': 'Εκδηλώσεις', 'wallet.add_to': 'Προσθήκη στο',
     'settings.bank_title': 'Τραπεζικά στοιχεία', 'settings.bank_hint': 'Εμφανίζονται στην πύλη μελών για πληρωμή με κατάθεση.',
     'portal.title': 'Πύλη μέλους', 'portal.explain': 'Ιδιωτικός σύνδεσμος για το μέλος: βλέπει κάρτα, υπόλοιπο και αποδείξεις, και δηλώνει πληρωμές με κατάθεση (προς επιβεβαίωση).',
@@ -601,6 +607,12 @@ const EXTRA = {
     'err.proofs_disabled': 'Η αποστολή αποδεικτικών δεν είναι διαθέσιμη.', 'err.wallet_not_configured': 'Το ψηφιακό πορτοφόλι δεν έχει ρυθμιστεί.',
   },
   en: {
+    'auth.demo_note': 'Demo account — the sign-in details are already filled in. Press “Sign in” and explore freely.',
+    'demo.banner': 'You are in the demo account. Explore freely — the data is sample data.', 'demo.cta': 'Get my own account',
+    'admin.demo_title': 'Demo & e-mail', 'admin.demo': 'Demo account', 'admin.demo_hint': 'Sign-in details are prefilled on the ?soc= link. Visitors cannot change the password, users or organisation details.',
+    'admin.demo_user': 'Prefilled username', 'admin.demo_pass': 'Prefilled password', 'admin.demo_badge': 'Demo',
+    'admin.email_enabled': 'E-mail sending', 'admin.email_hint': 'When off, the service sends no e-mail for this organisation (always off for demo accounts).',
+    'err.demo_locked': 'Not allowed in the demo account.',
     'nav.events': 'Events', 'wallet.add_to': 'Add to',
     'settings.bank_title': 'Bank details', 'settings.bank_hint': 'Shown on the member portal for paying by bank transfer.',
     'portal.title': 'Member portal', 'portal.explain': "A private link for the member: they see their card, balance and receipts, and can report bank transfers (to be confirmed).",
@@ -672,6 +684,12 @@ const EXTRA = {
     'err.proofs_disabled': 'Proof uploads are not available.', 'err.wallet_not_configured': 'Digital wallet is not configured.',
   },
   fr: {
+    'auth.demo_note': 'Compte de démonstration — les identifiants sont déjà remplis. Cliquez sur « Se connecter » et explorez librement.',
+    'demo.banner': 'Vous êtes sur le compte de démonstration. Explorez librement — les données sont fictives.', 'demo.cta': 'Je veux mon propre compte',
+    'admin.demo_title': 'Démo & e-mail', 'admin.demo': 'Compte de démonstration', 'admin.demo_hint': "Les identifiants sont pré-remplis sur le lien ?soc=. Les visiteurs ne peuvent modifier ni le mot de passe, ni les utilisateurs, ni l'organisation.",
+    'admin.demo_user': "Nom d'utilisateur pré-rempli", 'admin.demo_pass': 'Mot de passe pré-rempli', 'admin.demo_badge': 'Démo',
+    'admin.email_enabled': 'Envoi d’e-mails', 'admin.email_hint': "Désactivé : le service n'envoie aucun e-mail pour cette organisation (toujours désactivé pour une démo).",
+    'err.demo_locked': 'Non autorisé sur le compte de démonstration.',
     'nav.events': 'Événements', 'wallet.add_to': 'Ajouter à',
     'settings.bank_title': 'Coordonnées bancaires', 'settings.bank_hint': 'Affichées sur le portail membre pour les paiements par virement.',
     'portal.title': 'Portail membre', 'portal.explain': 'Un lien privé pour le membre : il voit sa carte, son solde et ses reçus, et peut déclarer ses virements (à confirmer).',

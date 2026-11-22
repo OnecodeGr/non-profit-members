@@ -7,7 +7,7 @@ import {
 } from './util.js';
 import { subscriptionState, quote, limitTiers, addYear, netPriceFor, VAT_RATE } from './billing.js';
 import { audit } from './audit.js';
-import { sendMail } from './contact.js';
+import { sendMail, tenantEmailAllowed } from './contact.js';
 import { contactConfig } from './landing.js';
 
 const COOKIE = 'm_admin';
@@ -26,7 +26,7 @@ function publicUrl(env, req) {
 async function tenantList(env, req) {
   const { results } = await env.DB.prepare(`
     SELECT t.id, t.key, t.name, t.email, t.phone, t.active, t.default_lang, t.currency, t.notes, t.created_at,
-      t.paid_until, t.member_limit, t.billing_email,
+      t.paid_until, t.member_limit, t.billing_email, t.is_demo, t.demo_username, t.demo_password, t.email_enabled,
       (SELECT COUNT(*) FROM members m WHERE m.tenant_id = t.id) AS member_count,
       (SELECT COUNT(*) FROM members m WHERE m.tenant_id = t.id AND m.status = 'active') AS active_count,
       (SELECT MAX(period_end) FROM subscriptions s WHERE s.tenant_id = t.id) AS last_period_end,
@@ -134,9 +134,13 @@ export async function handleAdmin(req, env, path) {
     }
     const limit = b.member_limit === undefined ? cur.member_limit : b.member_limit === '' || b.member_limit === null ? null : Math.max(1, int(b.member_limit, 100));
     const paidUntil = b.paid_until === undefined ? cur.paid_until : b.paid_until ? isoDate(b.paid_until) : null;
+    const isDemo = b.is_demo === undefined ? cur.is_demo : b.is_demo ? 1 : 0;
     await env.DB.prepare(
-      `UPDATE tenants SET member_limit = ?, paid_until = ?, billing_email = ? WHERE id = ?`,
-    ).bind(limit, paidUntil, str(b.billing_email ?? cur.billing_email, 200), id).run();
+      `UPDATE tenants SET member_limit = ?, paid_until = ?, billing_email = ?, is_demo = ?, demo_username = ?, demo_password = ?, email_enabled = ? WHERE id = ?`,
+    ).bind(limit, paidUntil, str(b.billing_email ?? cur.billing_email, 200), isDemo,
+      str(b.demo_username ?? cur.demo_username, 60), str(b.demo_password ?? cur.demo_password, 100),
+      // Demo organisations never send e-mail.
+      isDemo ? 0 : b.email_enabled === undefined ? cur.email_enabled : b.email_enabled ? 1 : 0, id).run();
     await audit(env, { tid: id, actor: `platform:${admin.u}` }, 'tenant.update', { details: Object.fromEntries(Object.entries(b).filter(([k, v]) => String(v ?? '') !== String(cur[k] ?? ''))) });
     await env.DB.prepare(
       `UPDATE tenants SET key = ?, name = ?, email = ?, phone = ?, default_lang = ?, active = ?, notes = ? WHERE id = ?`,
@@ -265,9 +269,9 @@ export async function handleAdmin(req, env, path) {
 
 // Weekly e-mail to OneCode sales listing organisations that need attention.
 export async function weeklyDigest(env) {
-  const { results } = await env.DB.prepare(`SELECT t.id, t.key, t.name, t.paid_until, t.member_limit, t.billing_email, t.phone, t.active,
+  const { results } = await env.DB.prepare(`SELECT t.id, t.key, t.name, t.paid_until, t.member_limit, t.billing_email, t.phone, t.active, t.is_demo, t.email_enabled,
       (SELECT COUNT(*) FROM members m WHERE m.tenant_id = t.id AND m.status = 'active') AS active_count FROM tenants t WHERE t.active = 1`).all();
-  const rows = results.map((t) => ({ ...t, s: subscriptionState(t, t.active_count) }))
+  const rows = results.filter(tenantEmailAllowed).map((t) => ({ ...t, s: subscriptionState(t, t.active_count) }))
     .filter((t) => ['expiring', 'grace', 'expired'].includes(t.s.status) || t.s.over_limit);
   if (!rows.length) return;
   const label = { expiring: 'Λήγει σύντομα', grace: 'Σε περίοδο χάριτος', expired: 'Έληξε', ok: 'OK', none: '-' };

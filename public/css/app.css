@@ -719,3 +719,8 @@ input[type=date] { min-width: 0; }
 
 /* Reserve space for the view so the footer does not jump when content arrives (CLS). */
 #view { min-height: calc(100vh - 150px); }
+
+.demo-banner { background: var(--paper-2); color: var(--ink-2); border-bottom-color: var(--line); }
+.demo-banner .ic { color: var(--gold-deep); }
+.demo-banner { flex-wrap: wrap; row-gap: 4px; }
+.demo-banner > span { flex: 1 1 220px; }

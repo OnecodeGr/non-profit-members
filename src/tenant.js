@@ -196,7 +196,11 @@ export async function handlePublic(req, env, path) {
     const key = new URL(req.url).searchParams.get('soc') || '';
     const t = await env.DB.prepare('SELECT * FROM tenants WHERE key = ? AND active = 1').bind(key.toLowerCase()).first();
     if (!t) throw new HttpError(404, 'tenant_not_found');
-    return json({ tenant: { key: t.key, name: t.name, logo: t.logo, color: t.color, default_lang: t.default_lang } });
+    return json({
+      tenant: { key: t.key, name: t.name, logo: t.logo, color: t.color, default_lang: t.default_lang },
+      // Demo organisations publish their (intentionally public) sign-in so visitors can try the service.
+      demo: t.is_demo ? { username: t.demo_username || '', password: t.demo_password || '' } : null,
+    });
   }
 
   let m = path.match(/^\/api\/public\/card\/([A-Za-z0-9_-]{10,64})$/);
@@ -284,6 +288,10 @@ export async function handleTenant(req, env, path) {
   const tid = ctx.tid;
   const DB = env.DB;
   const who = ctx.who;
+  // Demo organisations: visitors may use everything except changing credentials, users and organisation identity.
+  if (ctx.tenant.is_demo && method !== 'GET' && (path === '/api/me/password' || path.startsWith('/api/users') || path === '/api/settings')) {
+    throw new HttpError(403, 'demo_locked');
+  }
   // Subscription expired beyond the grace period: the organisation keeps read-only access.
   if (method !== 'GET' && !['/api/logout', '/api/me/password'].includes(path) && subscriptionState(ctx.tenant).status === 'expired') {
     throw new HttpError(402, 'subscription_expired');
@@ -292,7 +300,7 @@ export async function handleTenant(req, env, path) {
   if (path === '/api/me' && method === 'GET') {
     const { results: types } = await DB.prepare('SELECT * FROM membership_types WHERE tenant_id = ? ORDER BY name COLLATE NOCASE').bind(tid).all();
     const subscription = subscriptionState(ctx.tenant, await activeMemberCount(env, tid));
-    return json({ user: ctx.user, tenant: tenantPublic(ctx.tenant), types, public_url: publicUrl(env, req), subscription });
+    return json({ user: ctx.user, tenant: { ...tenantPublic(ctx.tenant), is_demo: !!ctx.tenant.is_demo }, types, public_url: publicUrl(env, req), subscription });
   }
 
   if (path === '/api/me/password' && method === 'POST') {

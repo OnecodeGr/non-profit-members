@@ -41,6 +41,16 @@ function mime({ from, fromName, to, replyTo, subject, text }) {
   ].filter((l, i, a) => l !== '' || i === a.length - 2).join('\r\n');
 }
 
+// Use for every e-mail that concerns a specific organisation: respects its e-mail switch (off for demo accounts).
+export function tenantEmailAllowed(t) {
+  return !!t && !t.is_demo && t.email_enabled !== 0;
+}
+
+export async function sendTenantMail(env, tenant, msg) {
+  if (!tenantEmailAllowed(tenant)) return false;
+  return sendMail(env, msg);
+}
+
 export async function sendMail(env, msg) {
   // 1) Cloudflare Email Routing "send_email" binding (preferred, no third party).
   if (env.SEND_EMAIL) {
