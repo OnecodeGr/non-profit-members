@@ -211,7 +211,7 @@ window.addEventListener('session-expired', () => {
 async function boot(keepView = false) {
   const path = location.pathname.replace(/\/+$/, '') || '/';
   document.documentElement.lang = getLang();
-  if (path === '/admin') {
+  if (document.querySelector('meta[name="admin-api"]')) {
     const m = await import('./views/admin.js');
     return m.adminApp(app);
   }

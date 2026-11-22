@@ -24,7 +24,10 @@ async function api(req, env, path) {
     if (origin && origin !== new URL(req.url).origin) throw new HttpError(403, 'bad_origin');
     if (!(req.headers.get('content-type') || '').includes('application/json')) throw new HttpError(415, 'json_required');
   }
-  if (path.startsWith('/api/admin/')) return handleAdmin(req, env, path);
+  // Platform admin API lives under the configurable secret prefix only; /api/admin/* is not reachable.
+  const adminApi = `/api${adminPath(env)}/`;
+  if (path.startsWith(adminApi)) return handleAdmin(req, env, `/api/admin/${path.slice(adminApi.length)}`);
+  if (path.startsWith('/api/admin/') || path === '/api/admin') throw new HttpError(404, 'not_found');
   if (path === '/api/public/contact' && req.method === 'POST') return handleContact(req, env);
   if (path === '/api/public/config' && req.method === 'GET') return json({ ...contactConfig(env), wallet: walletFlags(env) });
   if (path.startsWith('/api/public/wallet/') || path.startsWith('/api/public/logo/')) return handleWallet(req, env, path);
@@ -34,6 +37,25 @@ async function api(req, env, path) {
 }
 
 const DEMO_RESET_CRON = '7 3 * * *'; // must match wrangler.jsonc triggers
+
+// The platform admin panel is served only at ADMIN_PATH (e.g. /admin_996). The path is never written into
+// public files: the page learns its API prefix from a <meta> tag injected when it is served.
+function adminPath(env) {
+  const p = String(env.ADMIN_PATH || '').trim().replace(/\/+$/, '');
+  return /^\/[A-Za-z0-9_-]{4,64}$/.test(p) && p !== '/admin' ? p : '/admin_996';
+}
+
+async function serveAdmin(req, env, url) {
+  const res = await env.ASSETS.fetch(new Request(new URL('/app', url), req));
+  const page = new HTMLRewriter()
+    .on('head', { element(el) { el.append(`<meta name="admin-api" content="/api${adminPath(env)}">`, { html: true }); } })
+    .transform(res);
+  const out = new Response(page.body, page);
+  out.headers.set('cache-control', 'no-store');
+  out.headers.set('x-robots-tag', 'noindex, nofollow');
+  for (const [k, v] of Object.entries(SECURITY_HEADERS)) out.headers.set(k, v);
+  return out;
+}
 
 // Landing styles are inlined into the server-rendered page (no render-blocking requests).
 // Cached per isolate; a redeploy starts fresh isolates, so styles never go stale.
@@ -72,6 +94,8 @@ export default {
       for (const [k, v] of Object.entries(SECURITY_HEADERS)) res.headers.set(k, v);
       return res;
     }
+    if (req.method === 'GET' && path === adminPath(env)) return serveAdmin(req, env, url);
+    if (path === '/admin' || path.startsWith('/admin/')) return new Response('Not found', { status: 404, headers: SECURITY_HEADERS });
     // Landing pages (server-rendered for SEO). /?soc=<key> opens the tenant's branded sign-in instead.
     const LANDING = { '/': 'el', '/en': 'en', '/fr': 'fr' };
     if (req.method === 'GET' && LANDING[path]) {

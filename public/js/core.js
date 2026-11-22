@@ -14,8 +14,12 @@ export class ApiError extends Error {
   }
 }
 
+// Platform admin calls use the secret prefix the server injected into the admin page.
+const ADMIN_API = typeof document !== 'undefined' ? document.querySelector('meta[name="admin-api"]')?.content : null;
+
 export async function api(path, { method = 'GET', body, query } = {}) {
-  let url = path.startsWith('/') ? path : `/api/${path}`;
+  const isAdmin = path.startsWith('admin/');
+  let url = path.startsWith('/') ? path : isAdmin && ADMIN_API ? `${ADMIN_API}/${path.slice(6)}` : `/api/${path}`;
   if (query) {
     const qs = new URLSearchParams(Object.entries(query).filter(([, v]) => v !== undefined && v !== null && v !== ''));
     if ([...qs].length) url += `?${qs}`;
@@ -38,7 +42,7 @@ export async function api(path, { method = 'GET', body, query } = {}) {
     /* empty */
   }
   if (!res.ok) {
-    if (res.status === 401 && state.me && !url.includes('/login') && !url.startsWith('/api/admin') && !url.startsWith('/api/public')) {
+    if (res.status === 401 && state.me && !isAdmin && !url.includes('/login') && !url.startsWith('/api/public')) {
       state.me = null;
       window.dispatchEvent(new Event('session-expired'));
     }

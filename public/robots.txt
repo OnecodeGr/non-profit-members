@@ -4,7 +4,6 @@ Allow: /en
 Allow: /fr
 Disallow: /api/
 Disallow: /app
-Disallow: /admin
 Disallow: /c/
 Disallow: /s/
 

@@ -10,7 +10,7 @@ installable as a PWA. Languages: Greek (default), English, French.
 |---|---|
 | **Landing** (`/`, `/en`, `/fr`) | Server-rendered presentation for SEO (meta, Open Graph, hreflang, JSON-LD SoftwareApplication + FAQ, `robots.txt`, `sitemap.xml`), sign-in (tenant key + username + password), pricing + calculator, FAQ, contact form → `sales@onecode.gr` (Turnstile + honeypot + rate limit, saved in D1), suggestion button (WhatsApp / Viber / Telegram / email). |
 | **Tenant sign-in** | `members.onecode.win/?soc=<tenantkey>` opens the organisation's branded sign-in (username + password only). |
-| **Platform admin** (`/admin`) | Create tenants (name, key, admin username/password), copy link + QR, edit/deactivate, reset credentials, delete (type the key to confirm). |
+| **Platform admin** (`/admin_996`, configurable via `ADMIN_PATH`) | Create tenants (name, key, admin username/password), copy link + QR, edit/deactivate, reset credentials, delete (type the key to confirm). |
 | **Members** | Register with categories, photo, notes; search/filter/sort; roster export to PDF / XLSX / CSV (`;`). |
 | **Cards & QR** | Luxury member card; print on A4 (10/page with crop marks) or CR80 card printer; PDF; digital card link. QR opens a public verification page; in-app scanner (BarcodeDetector + jsQR fallback) or member-number lookup. |
 | **Annual dues** | One-click yearly charge per category with preview, duplicate protection, "joined by year" rule, undo. |
@@ -32,7 +32,7 @@ installable as a PWA. Languages: Greek (default), English, French.
 npm install
 cp .dev.vars.example .dev.vars    # then edit the values
 npm run db:migrate:local
-npm run dev                        # http://localhost:8787  (admin panel: /admin)
+npm run dev                        # http://localhost:8787  (admin panel: /admin_996)
 ```
 
 ## Deploying to Cloudflare
