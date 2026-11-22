@@ -530,8 +530,12 @@ const fr = {
 // ---------- Portal, wallet, events, audit, billing ----------
 const EXTRA = {
   el: {
+    'share.copy_iban': 'Αντιγραφή IBAN', 'share.copy_reference': 'Αντιγραφή αιτιολογίας',
+    'admin.demo_reset': 'Επαναφορά demo', 'admin.demo_reset_confirm': 'Διαγραφή όλων των δεδομένων του «{name}» και φόρτωση των δειγμάτων; Γίνεται αυτόματα κάθε νύχτα.',
+    'admin.demo_reset_done': 'Το demo επαναφέρθηκε: {m} μέλη, {t} κινήσεις, {e} εκδηλώσεις', 'audit.a.demo.reset': 'Επαναφορά δεδομένων demo', 'err.not_demo': 'Ο φορέας δεν είναι λογαριασμός επίδειξης.',
+    'demo.banner': 'Βρίσκεστε στον λογαριασμό επίδειξης. Δοκιμάστε ελεύθερα — τα δεδομένα είναι ενδεικτικά και επανέρχονται κάθε βράδυ.',
     'auth.demo_note': 'Λογαριασμός επίδειξης — τα στοιχεία είναι ήδη συμπληρωμένα. Πατήστε «Σύνδεση» και δοκιμάστε ελεύθερα.',
-    'demo.banner': 'Βρίσκεστε στον λογαριασμό επίδειξης. Δοκιμάστε ελεύθερα — τα δεδομένα είναι ενδεικτικά.', 'demo.cta': 'Θέλω δικό μου λογαριασμό',
+    'demo.cta': 'Θέλω δικό μου λογαριασμό',
     'admin.demo_title': 'Επίδειξη & email', 'admin.demo': 'Λογαριασμός επίδειξης', 'admin.demo_hint': 'Τα στοιχεία εισόδου προσυμπληρώνονται στον σύνδεσμο ?soc=. Οι επισκέπτες δεν μπορούν να αλλάξουν συνθηματικό, χρήστες ή στοιχεία φορέα.',
     'admin.demo_user': 'Προσυμπληρωμένο όνομα χρήστη', 'admin.demo_pass': 'Προσυμπληρωμένο συνθηματικό', 'admin.demo_badge': 'Demo',
     'admin.email_enabled': 'Αποστολή email', 'admin.email_hint': 'Όταν είναι ανενεργό, η υπηρεσία δεν στέλνει κανένα email για αυτόν τον φορέα (πάντα ανενεργό για επίδειξη).',
@@ -607,8 +611,12 @@ const EXTRA = {
     'err.proofs_disabled': 'Η αποστολή αποδεικτικών δεν είναι διαθέσιμη.', 'err.wallet_not_configured': 'Το ψηφιακό πορτοφόλι δεν έχει ρυθμιστεί.',
   },
   en: {
+    'share.copy_iban': 'Copy IBAN', 'share.copy_reference': 'Copy reference',
+    'admin.demo_reset': 'Reset demo', 'admin.demo_reset_confirm': 'Delete all data of “{name}” and load the sample dataset? This also happens automatically every night.',
+    'admin.demo_reset_done': 'Demo reset: {m} members, {t} transactions, {e} events', 'audit.a.demo.reset': 'Demo data reset', 'err.not_demo': 'This organisation is not a demo account.',
+    'demo.banner': 'You are in the demo account. Explore freely — the data is sample data and resets every night.',
     'auth.demo_note': 'Demo account — the sign-in details are already filled in. Press “Sign in” and explore freely.',
-    'demo.banner': 'You are in the demo account. Explore freely — the data is sample data.', 'demo.cta': 'Get my own account',
+    'demo.cta': 'Get my own account',
     'admin.demo_title': 'Demo & e-mail', 'admin.demo': 'Demo account', 'admin.demo_hint': 'Sign-in details are prefilled on the ?soc= link. Visitors cannot change the password, users or organisation details.',
     'admin.demo_user': 'Prefilled username', 'admin.demo_pass': 'Prefilled password', 'admin.demo_badge': 'Demo',
     'admin.email_enabled': 'E-mail sending', 'admin.email_hint': 'When off, the service sends no e-mail for this organisation (always off for demo accounts).',
@@ -684,8 +692,12 @@ const EXTRA = {
     'err.proofs_disabled': 'Proof uploads are not available.', 'err.wallet_not_configured': 'Digital wallet is not configured.',
   },
   fr: {
+    'share.copy_iban': "Copier l'IBAN", 'share.copy_reference': 'Copier la référence',
+    'admin.demo_reset': 'Réinitialiser la démo', 'admin.demo_reset_confirm': "Supprimer toutes les données de « {name} » et charger les données d'exemple ? Cela se fait aussi automatiquement chaque nuit.",
+    'admin.demo_reset_done': 'Démo réinitialisée : {m} membres, {t} opérations, {e} événements', 'audit.a.demo.reset': 'Réinitialisation de la démo', 'err.not_demo': "Cette organisation n'est pas un compte de démonstration.",
+    'demo.banner': 'Vous êtes sur le compte de démonstration. Explorez librement — les données sont fictives et réinitialisées chaque nuit.',
     'auth.demo_note': 'Compte de démonstration — les identifiants sont déjà remplis. Cliquez sur « Se connecter » et explorez librement.',
-    'demo.banner': 'Vous êtes sur le compte de démonstration. Explorez librement — les données sont fictives.', 'demo.cta': 'Je veux mon propre compte',
+    'demo.cta': 'Je veux mon propre compte',
     'admin.demo_title': 'Démo & e-mail', 'admin.demo': 'Compte de démonstration', 'admin.demo_hint': "Les identifiants sont pré-remplis sur le lien ?soc=. Les visiteurs ne peuvent modifier ni le mot de passe, ni les utilisateurs, ni l'organisation.",
     'admin.demo_user': "Nom d'utilisateur pré-rempli", 'admin.demo_pass': 'Mot de passe pré-rempli', 'admin.demo_badge': 'Démo',
     'admin.email_enabled': 'Envoi d’e-mails', 'admin.email_hint': "Désactivé : le service n'envoie aucun e-mail pour cette organisation (toujours désactivé pour une démo).",

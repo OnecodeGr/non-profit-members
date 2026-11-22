@@ -171,8 +171,8 @@ export async function memberPortal(app, token) {
           <dl class="info-list">
             ${tn.bank_beneficiary ? `<div><dt>${esc(t('portal.beneficiary'))}</dt><dd>${esc(tn.bank_beneficiary)}</dd></div>` : ''}
             ${tn.bank_name ? `<div><dt>${esc(t('portal.bank'))}</dt><dd>${esc(tn.bank_name)}</dd></div>` : ''}
-            <div><dt>IBAN</dt><dd class="copyable"><code>${esc(tn.bank_iban)}</code><button class="icon-btn" data-copy="${esc(tn.bank_iban.replace(/\s/g, ''))}">${icon('copy')}</button></dd></div>
-            <div><dt>${esc(t('portal.reference'))}</dt><dd class="copyable"><code>${esc(ref)}</code><button class="icon-btn" data-copy="${esc(ref)}">${icon('copy')}</button></dd></div>
+            <div><dt>IBAN</dt><dd class="copyable"><code>${esc(tn.bank_iban)}</code><button class="icon-btn" aria-label="${esc(t('share.copy_iban'))}" data-copy="${esc(tn.bank_iban.replace(/\s/g, ''))}">${icon('copy')}</button></dd></div>
+            <div><dt>${esc(t('portal.reference'))}</dt><dd class="copyable"><code>${esc(ref)}</code><button class="icon-btn" aria-label="${esc(t('share.copy_reference'))}" data-copy="${esc(ref)}">${icon('copy')}</button></dd></div>
             ${m.balance > 0 ? `<div><dt>${esc(t('tx.amount'))}</dt><dd><b>${esc(cur(m.balance))}</b></dd></div>` : ''}
           </dl>
         </div>

@@ -66,7 +66,7 @@ export async function debits(el, _p, stale) {
     try {
       last = await api('debits/preview', { method: 'POST', body: p });
       const rows = last.groups.filter((g) => g.eligible);
-      box.innerHTML = `<div class="table-scroll">
+      box.innerHTML = `<div class="table-scroll" tabindex="0" role="region" aria-label="${esc(t('debits.summary'))}">
         <table class="table">
           <thead><tr><th>${esc(t('member.type'))}</th><th class="r">${esc(t('debits.eligible'))}</th><th class="r">${esc(t('debits.already'))}</th><th class="r">${esc(t('debits.to_charge'))}</th><th class="r">${esc(t('debits.total'))}</th></tr></thead>
           <tbody>${rows.map((g) => `<tr><td>${esc(g.name || t('debits.no_type'))}</td><td class="r">${g.eligible}</td><td class="r">${g.already}</td><td class="r"><b>${g.to_charge}</b></td><td class="r">${esc(money(g.total))}</td></tr>`).join('') || `<tr><td colspan="5" class="muted">${esc(t('debits.no_members'))}</td></tr>`}</tbody>

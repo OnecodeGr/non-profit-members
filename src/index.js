@@ -8,6 +8,7 @@ import { verify, getCookie } from './util.js';
 import { handlePortal } from './features.js';
 import { handleWallet, walletFlags } from './wallet.js';
 import { weeklyDigest } from './admin.js';
+import { resetAllDemos } from './demo.js';
 
 const SECURITY_HEADERS = {
   'x-content-type-options': 'nosniff',
@@ -31,6 +32,8 @@ async function api(req, env, path) {
   if (path.startsWith('/api/public/')) return handlePublic(req, env, path);
   return handleTenant(req, env, path);
 }
+
+const DEMO_RESET_CRON = '7 3 * * *'; // must match wrangler.jsonc triggers
 
 // Landing styles are inlined into the server-rendered page (no render-blocking requests).
 // Cached per isolate; a redeploy starts fresh isolates, so styles never go stale.
@@ -87,8 +90,9 @@ export default {
     return env.ASSETS.fetch(req);
   },
 
-  // Weekly billing digest to OneCode sales (configured in wrangler.jsonc "triggers").
+  // Scheduled jobs (wrangler.jsonc "triggers"): nightly demo reset and the weekly billing digest.
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(weeklyDigest(env));
+    if (event.cron === DEMO_RESET_CRON) ctx.waitUntil(resetAllDemos(env));
+    else ctx.waitUntil(weeklyDigest(env));
   },
 };

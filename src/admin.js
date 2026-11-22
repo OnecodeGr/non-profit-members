@@ -8,6 +8,7 @@ import {
 import { subscriptionState, quote, limitTiers, addYear, netPriceFor, VAT_RATE } from './billing.js';
 import { audit } from './audit.js';
 import { sendMail, tenantEmailAllowed } from './contact.js';
+import { resetDemoTenant } from './demo.js';
 import { contactConfig } from './landing.js';
 
 const COOKIE = 'm_admin';
@@ -199,6 +200,15 @@ export async function handleAdmin(req, env, path) {
     }
     await audit(env, { tid: id, actor: `platform:${admin.u}` }, 'tenant.credentials', { summary: username, details: { created: !existing } });
     return json({ ok: true, created: !existing });
+  }
+
+  // ----- demo reset (also runs nightly) -----
+  m = path.match(/^\/api\/admin\/tenants\/(\d+)\/reset-demo$/);
+  if (m && method === 'POST') {
+    const t = await env.DB.prepare('SELECT * FROM tenants WHERE id = ?').bind(int(m[1])).first();
+    if (!t) throw new HttpError(404, 'not_found');
+    if (!t.is_demo) throw new HttpError(400, 'not_demo');
+    return json({ ok: true, ...(await resetDemoTenant(env, t, `platform:${admin.u}`)) });
   }
 
   // ----- billing -----

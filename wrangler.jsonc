@@ -41,8 +41,8 @@
   // binding the app works and the proof-upload field is hidden. To enable: activate R2 in the
   // Cloudflare dashboard, run `npx wrangler r2 bucket create members-proofs`, then uncomment:
   // "r2_buckets": [{ "binding": "PROOFS", "bucket_name": "members-proofs" }],
-  // Weekly billing digest e-mail to sales (Mondays 06:17 UTC).
-  "triggers": { "crons": ["17 6 * * 1"] },
+  // Weekly billing digest to sales (Mondays 06:17 UTC) and nightly demo reset (03:07 UTC = 05:07/06:07 Greek time).
+  "triggers": { "crons": ["17 6 * * 1", "7 3 * * *"] },
   // Custom domain. The onecode.win zone must be on the same Cloudflare account.
   "routes": [{ "pattern": "members.onecode.win", "custom_domain": true }],
   "observability": { "enabled": true }

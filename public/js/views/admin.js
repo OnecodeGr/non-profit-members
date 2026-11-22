@@ -367,6 +367,7 @@ async function tenantDialog(x, reload) {
     },
     actions: [
       { label: t('common.delete'), kind: 'danger-ghost', value: 'delete' },
+      ...(x.is_demo ? [{ label: t('admin.demo_reset'), kind: 'ghost', icon: 'history', value: 'reset-demo' }] : []),
       { label: t('admin.credentials'), kind: 'ghost', icon: 'key', value: 'creds' },
       { label: t('bill.subscriptions'), kind: 'ghost', icon: 'calendar', value: 'billing' },
       {
@@ -380,6 +381,16 @@ async function tenantDialog(x, reload) {
   });
   if (r === 'saved') reload();
   if (r === 'billing') return billingDialog(x, reload);
+  if (r === 'reset-demo') {
+    if (!(await confirmDialog(t('admin.demo_reset_confirm', { name: x.name }), { ok: t('admin.demo_reset') }))) return;
+    try {
+      const res = await api(`admin/tenants/${x.id}/reset-demo`, { method: 'POST' });
+      toast(t('admin.demo_reset_done', { m: res.members, t: res.transactions, e: res.events }));
+      reload();
+    } catch (err) {
+      toast(errText(err), 'err');
+    }
+  }
   if (r === 'creds') {
     const pw = genPassword();
     const c = await modal({

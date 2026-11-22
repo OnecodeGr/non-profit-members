@@ -724,3 +724,6 @@ input[type=date] { min-width: 0; }
 .demo-banner .ic { color: var(--gold-deep); }
 .demo-banner { flex-wrap: wrap; row-gap: 4px; }
 .demo-banner > span { flex: 1 1 220px; }
+
+/* .hide-sm re-shown on desktop must keep table semantics for cells */
+@media (min-width: 900px) { th.hide-sm, td.hide-sm { display: table-cell; } }
