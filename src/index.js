@@ -25,8 +25,9 @@ async function api(req, env, path) {
     if (!(req.headers.get('content-type') || '').includes('application/json')) throw new HttpError(415, 'json_required');
   }
   // Platform admin API lives under the configurable secret prefix only; /api/admin/* is not reachable.
-  const adminApi = `/api${adminPath(env)}/`;
-  if (path.startsWith(adminApi)) return handleAdmin(req, env, `/api/admin/${path.slice(adminApi.length)}`);
+  const ap = adminPath(env);
+  const adminApi = ap ? `/api${ap}/` : null;
+  if (adminApi && path.startsWith(adminApi)) return handleAdmin(req, env, `/api/admin/${path.slice(adminApi.length)}`);
   if (path.startsWith('/api/admin/') || path === '/api/admin') throw new HttpError(404, 'not_found');
   if (path === '/api/public/contact' && req.method === 'POST') return handleContact(req, env);
   if (path === '/api/public/config' && req.method === 'GET') return json({ ...contactConfig(env), wallet: walletFlags(env) });
@@ -38,11 +39,12 @@ async function api(req, env, path) {
 
 const DEMO_RESET_CRON = '7 3 * * *'; // must match wrangler.jsonc triggers
 
-// The platform admin panel is served only at ADMIN_PATH (e.g. /admin_996). The path is never written into
-// public files: the page learns its API prefix from a <meta> tag injected when it is served.
+// The platform admin panel is served only at the ADMIN_PATH secret (wrangler secret put ADMIN_PATH).
+// The value lives in no file of this (public) repository: the admin page learns its API prefix from a
+// <meta> tag injected when it is served. Without the secret the admin panel is disabled.
 function adminPath(env) {
   const p = String(env.ADMIN_PATH || '').trim().replace(/\/+$/, '');
-  return /^\/[A-Za-z0-9_-]{4,64}$/.test(p) && p !== '/admin' ? p : '/admin_996';
+  return /^\/[A-Za-z0-9_-]{6,64}$/.test(p) && !['/admin', '/app', '/api'].includes(p) ? p : null;
 }
 
 async function serveAdmin(req, env, url) {
@@ -94,7 +96,7 @@ export default {
       for (const [k, v] of Object.entries(SECURITY_HEADERS)) res.headers.set(k, v);
       return res;
     }
-    if (req.method === 'GET' && path === adminPath(env)) return serveAdmin(req, env, url);
+    if (req.method === 'GET' && adminPath(env) && path === adminPath(env)) return serveAdmin(req, env, url);
     if (path === '/admin' || path.startsWith('/admin/')) return new Response('Not found', { status: 404, headers: SECURITY_HEADERS });
     // Landing pages (server-rendered for SEO). /?soc=<key> opens the tenant's branded sign-in instead.
     const LANDING = { '/': 'el', '/en': 'en', '/fr': 'fr' };

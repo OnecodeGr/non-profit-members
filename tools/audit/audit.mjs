@@ -62,7 +62,7 @@ function pages(ctx) {
   return {
     public: [
       ['Landing (el)', '/'], ['Landing (en)', '/en'], ['Landing (fr)', '/fr'],
-      ['Tenant sign-in', `/?soc=${CREDS.tenant_key}`], ['Admin sign-in', process.env.ADMIN_PATH || '/admin_996'],
+      ['Tenant sign-in', `/?soc=${CREDS.tenant_key}`], ...(process.env.ADMIN_PATH ? [['Admin sign-in', process.env.ADMIN_PATH]] : []),
       ['Public card', `/c/${ctx.qr}`], ['Member portal', new URL(ctx.portal).pathname], ['Shared statement', new URL(ctx.share).pathname],
     ],
     app: [

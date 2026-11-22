@@ -355,3 +355,128 @@ export function currencySymbol() {
     return cur;
   }
 }
+
+// ---------- date fields: always day/month/year ----------
+// Native <input type="date"> follows the browser's language (month/day/year on US-English browsers).
+// Every date input is upgraded to a text field showing ΗΗ/ΜΜ/ΕΕΕΕ plus a calendar button that opens the
+// native picker. The original input keeps its name and ISO value, so forms and handlers work unchanged.
+const DATE_PLACEHOLDER = { el: 'ηη/μμ/εεεε', en: 'dd/mm/yyyy', fr: 'jj/mm/aaaa' };
+const nativeValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+
+function isoToDmy(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : '';
+}
+
+function dmyToIso(text, allowShortYear = true) {
+  const yearRe = allowShortYear ? '(\\d{2}|\\d{4})' : '(\\d{4})';
+  const m = new RegExp(`^(\\d{1,2})[/.\\-\\s](\\d{1,2})[/.\\-\\s]${yearRe}$`).exec(String(text).trim());
+  if (!m) return null;
+  let [, d, mo, y] = m;
+  if (y.length === 2) y = String(+y > 50 ? 1900 + +y : 2000 + +y);
+  const dt = new Date(Date.UTC(+y, +mo - 1, +d));
+  if (dt.getUTCFullYear() !== +y || dt.getUTCMonth() !== +mo - 1 || dt.getUTCDate() !== +d) return null;
+  return `${y}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+}
+
+function enhanceDateInput(input) {
+  if (input.dataset.dmy || input.closest('.dmy')) return;
+  input.dataset.dmy = '1';
+  const wrap = document.createElement('span');
+  wrap.className = 'dmy';
+  input.parentNode.insertBefore(wrap, input);
+  const text = document.createElement('input');
+  text.type = 'text';
+  text.inputMode = 'numeric';
+  text.autocomplete = 'off';
+  text.maxLength = 10;
+  text.placeholder = DATE_PLACEHOLDER[getLang()] || DATE_PLACEHOLDER.el;
+  for (const a of ['aria-label', 'required', 'disabled']) if (input.hasAttribute(a)) text.setAttribute(a, input.getAttribute(a));
+  if (!text.hasAttribute('aria-label')) {
+    const lbl = input.closest('label')?.querySelector('span')?.textContent?.trim();
+    if (lbl) text.setAttribute('aria-label', lbl);
+  }
+  text.value = isoToDmy(nativeValue.get.call(input));
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'dmy-btn';
+  btn.tabIndex = -1;
+  btn.setAttribute('aria-hidden', 'true');
+  btn.innerHTML = icon('calendar');
+  wrap.append(text, btn, input);
+  input.classList.add('dmy-native');
+  input.tabIndex = -1;
+  input.setAttribute('aria-hidden', 'true');
+
+  // Programmatic writes to input.value (e.g. range chips) keep the visible text in sync.
+  Object.defineProperty(input, 'value', {
+    configurable: true,
+    get() { return nativeValue.get.call(this); },
+    set(v) {
+      nativeValue.set.call(this, v);
+      text.value = isoToDmy(v);
+      text.classList.remove('invalid');
+    },
+  });
+  let syncing = false; // our own events must not rewrite the text being typed
+  const fire = () => {
+    syncing = true;
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    syncing = false;
+  };
+  text.addEventListener('input', (e) => {
+    e.stopPropagation(); // handlers listen on the real input
+    // auto-insert slashes while typing digits: 21 -> 21/, 2111 -> 21/11/
+    let v = text.value.replace(/[^\d/.\-]/g, '');
+    if (e.inputType !== 'deleteContentBackward' && /^\d{2}$|^\d{1,2}[/.\-]\d{2}$/.test(v)) v += '/';
+    text.value = v;
+    if (!v) {
+      nativeValue.set.call(input, '');
+      text.classList.remove('invalid');
+      return fire();
+    }
+    const iso = dmyToIso(v, false); // full 4-digit year while typing; 2-digit years are completed on blur
+    text.classList.toggle('invalid', !iso && v.length >= 10);
+    if (iso && iso !== nativeValue.get.call(input)) {
+      nativeValue.set.call(input, iso);
+      fire();
+    }
+  });
+  text.addEventListener('change', (e) => e.stopPropagation());
+  text.addEventListener('blur', () => {
+    const iso = dmyToIso(text.value);
+    if (iso) {
+      text.value = isoToDmy(iso);
+      text.classList.remove('invalid');
+      if (iso !== nativeValue.get.call(input)) {
+        nativeValue.set.call(input, iso);
+        fire();
+      }
+    } else if (text.value) text.classList.add('invalid');
+  });
+  // native picker -> visible text
+  input.addEventListener('change', () => {
+    if (syncing) return;
+    text.value = isoToDmy(nativeValue.get.call(input));
+    text.classList.remove('invalid');
+  });
+  btn.addEventListener('click', () => {
+    try {
+      input.showPicker();
+    } catch {
+      input.focus();
+    }
+  });
+}
+
+if (typeof document !== 'undefined' && typeof MutationObserver !== 'undefined') {
+  const scan = (root) => root.querySelectorAll?.('input[type="date"]:not([data-dmy])').forEach(enhanceDateInput);
+  new MutationObserver((muts) => {
+    for (const m of muts) for (const n of m.addedNodes) if (n.nodeType === 1) {
+      if (n.matches?.('input[type="date"]')) enhanceDateInput(n);
+      else scan(n);
+    }
+  }).observe(document.documentElement, { childList: true, subtree: true });
+  scan(document);
+}

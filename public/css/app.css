@@ -727,3 +727,13 @@ input[type=date] { min-width: 0; }
 
 /* .hide-sm re-shown on desktop must keep table semantics for cells */
 @media (min-width: 900px) { th.hide-sm, td.hide-sm { display: table-cell; } }
+
+/* day/month/year date field (see core.js) */
+.dmy { position: relative; display: flex; align-items: center; min-width: 0; }
+.dmy > input[type=text] { padding-right: 42px; font-variant-numeric: tabular-nums; }
+.dmy-btn { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; display: grid; place-items: center; border: 0; background: none; color: var(--muted); cursor: pointer; border-radius: var(--r); }
+.dmy-btn:hover { color: var(--gold-deep); background: var(--paper-2); }
+.dmy-btn .ic { width: 18px; height: 18px; }
+/* keep the native input in the layout (needed for showPicker) but invisible */
+.dmy-native { position: absolute; right: 0; bottom: 0; width: 1px !important; height: 1px; min-height: 0 !important; padding: 0 !important; border: 0 !important; opacity: 0; pointer-events: none; }
+.toolbar-row > .dmy { flex: 1 1 140px; }
