@@ -79,7 +79,7 @@ async function org(el) {
       <label class="field"><span>${esc(t('settings.color'))}</span><input name="color" type="color" value="${esc(tn.color || '#b08d57')}"></label>
       <label class="field span-2"><span>${esc(t('settings.card_note'))}</span><input name="card_note" value="${esc(tn.card_note)}" maxlength="60" placeholder="${esc(t('settings.card_note_placeholder'))}"></label>
     </div>
-    <h4 class="sub-title">${esc(t('settings.bank_title'))}</h4>
+    <h2 class="sub-title">${esc(t('settings.bank_title'))}</h2>
     <p class="muted small">${esc(t('settings.bank_hint'))}</p>
     <div class="grid-2">
       <label class="field span-2"><span>IBAN</span><input name="bank_iban" value="${esc(tn.bank_iban || '')}" autocapitalize="characters" placeholder="GR00 0000 0000 0000 0000 0000 000"></label>
@@ -133,7 +133,7 @@ async function types(el) {
   const { types: list } = await api('types');
   el.innerHTML = `
   <section class="panel">
-    <div class="panel-head"><h3>${esc(t('settings.types'))}</h3><button class="btn btn-primary btn-sm" data-add>${icon('plus')}<span>${esc(t('common.add'))}</span></button></div>
+    <div class="panel-head"><h2>${esc(t('settings.types'))}</h2><button class="btn btn-primary btn-sm" data-add>${icon('plus')}<span>${esc(t('common.add'))}</span></button></div>
     <p class="muted small pad-x">${esc(t('settings.types_hint'))}</p>
     <ul class="rows">${list.map((x) => `<li><button class="row" data-edit="${x.id}"><span class="tx-ic">${icon('card')}</span>
       <span class="row-main"><b>${esc(x.name)}</b><small>${esc(t('member.count', { n: x.member_count }))}</small></span>
@@ -185,7 +185,7 @@ async function users(el) {
   const { users: list } = await api('users');
   el.innerHTML = `
   <section class="panel">
-    <div class="panel-head"><h3>${esc(t('settings.users'))}</h3><button class="btn btn-primary btn-sm" data-add>${icon('plus')}<span>${esc(t('common.add'))}</span></button></div>
+    <div class="panel-head"><h2>${esc(t('settings.users'))}</h2><button class="btn btn-primary btn-sm" data-add>${icon('plus')}<span>${esc(t('common.add'))}</span></button></div>
     <p class="muted small pad-x">${esc(t('settings.roles_hint'))}</p>
     <ul class="rows">${list.map((u) => `<li><button class="row" data-edit="${u.id}"><span class="avatar">${esc((u.full_name || u.username).slice(0, 1).toUpperCase())}</span>
       <span class="row-main"><b>${esc(u.full_name || u.username)}</b><small>${esc(u.username)} · ${esc(t(`role.${u.role}`))}${u.last_login ? ` · ${esc(fmtDateTime(u.last_login))}` : ''}</small></span>
@@ -235,7 +235,7 @@ async function users(el) {
 async function account(el) {
   el.innerHTML = `
   <form class="form panel" novalidate>
-    <h3>${esc(t('settings.change_password'))}</h3>
+    <h2 class="sub-title">${esc(t('settings.change_password'))}</h2>
     <label class="field"><span>${esc(t('settings.current_password'))}</span><input name="current" type="password" autocomplete="current-password" required></label>
     <label class="field"><span>${esc(t('settings.new_password'))}</span><input name="password" type="password" autocomplete="new-password" minlength="8" required></label>
     <label class="field"><span>${esc(t('settings.repeat_password'))}</span><input name="password2" type="password" autocomplete="new-password" required></label>
@@ -313,15 +313,15 @@ async function auditTab(el) {
     <button class="btn btn-primary" data-export-all>${icon('download')}<span>${esc(t('export.button'))}</span></button>
   </section>
   <div class="toolbar">
-    <div class="search">${icon('search')}<input type="search" data-k="q" placeholder="${esc(t('audit.search'))}" value="${esc(auditState.q)}"></div>
+    <div class="search">${icon('search')}<input type="search" data-k="q" placeholder="${esc(t('audit.search'))}" aria-label="${esc(t('audit.search'))}" value="${esc(auditState.q)}"></div>
     <div class="toolbar-row">
-      <select data-k="action"><option value="">${esc(t('audit.all_actions'))}</option>${ACTION_GROUPS.map((g) => `<option value="${g}." ${auditState.action === `${g}.` ? 'selected' : ''}>${esc(t(`audit.g.${g}`))}</option>`).join('')}</select>
-      <select data-k="actor"><option value="">${esc(t('audit.all_users'))}</option></select>
+      <select data-k="action" aria-label="${esc(t('audit.action'))}"><option value="">${esc(t('audit.all_actions'))}</option>${ACTION_GROUPS.map((g) => `<option value="${g}." ${auditState.action === `${g}.` ? 'selected' : ''}>${esc(t(`audit.g.${g}`))}</option>`).join('')}</select>
+      <select data-k="actor" aria-label="${esc(t('audit.who'))}"><option value="">${esc(t('audit.all_users'))}</option></select>
       <input type="date" data-k="from" value="${esc(auditState.from)}" aria-label="${esc(t('range.from'))}">
       <input type="date" data-k="to" value="${esc(auditState.to)}" aria-label="${esc(t('range.to'))}">
     </div>
   </div>
-  <section class="panel"><div class="panel-head"><h3>${esc(t('audit.title'))} <span class="pill" data-total>…</span></h3>
+  <section class="panel"><div class="panel-head"><h2>${esc(t('audit.title'))} <span class="pill" data-total>…</span></h2>
     <button class="btn btn-ghost btn-sm" data-export-log>${icon('share')}<span>${esc(t('common.export'))}</span></button></div>
     <ul class="rows audit-list"></ul><div class="more-wrap pad"></div></section>`;
   let offset = 0;

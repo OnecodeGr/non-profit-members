@@ -32,7 +32,7 @@ export async function dashboard(el, _p, stale) {
   </section>
 
   <section class="panel">
-    <div class="panel-head"><h3>${esc(t('dash.recent_payments'))}</h3><a class="link" href="#/transactions?type=payment">${esc(t('common.view_all'))}</a></div>
+    <div class="panel-head"><h2>${esc(t('dash.recent_payments'))}</h2><a class="link" href="#/transactions?type=payment">${esc(t('common.view_all'))}</a></div>
     ${d.recent.length ? `<ul class="rows">${d.recent
       .map((x) => `<li><a class="row" href="#/members/${x.member_id}">
         <span class="row-main"><b>${esc(fullName(x))}</b><small>${esc(fmtDate(x.date))} · ${esc(t(`method.${x.method || 'other'}`))}${x.receipt_no ? ` · #${x.receipt_no}` : ''}</small></span>

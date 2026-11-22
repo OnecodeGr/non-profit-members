@@ -32,6 +32,24 @@ async function api(req, env, path) {
   return handleTenant(req, env, path);
 }
 
+// Landing styles are inlined into the server-rendered page (no render-blocking requests).
+// Cached per isolate; a redeploy starts fresh isolates, so styles never go stale.
+let cssCache = null;
+async function landingCss(env, url) {
+  if (cssCache !== null) return cssCache;
+  try {
+    const parts = await Promise.all(['/css/app.css', '/css/landing.css'].map(async (p) => {
+      const r = await env.ASSETS.fetch(new Request(new URL(p, url)));
+      if (!r.ok) throw new Error(p);
+      return r.text();
+    }));
+    cssCache = parts.join('\n').replace(/<\/style/gi, '<\\/style');
+  } catch {
+    cssCache = ''; // fall back to <link> tags
+  }
+  return cssCache;
+}
+
 export default {
   async fetch(req, env) {
     const url = new URL(req.url);
@@ -56,7 +74,7 @@ export default {
     if (req.method === 'GET' && LANDING[path]) {
       if (path === '/' && url.searchParams.get('soc')) return env.ASSETS.fetch(new Request(new URL('/app', url), req));
       if (await verify(env, getCookie(req, 'm_sess'), 'tenant').catch(() => null)) return Response.redirect(new URL('/app', url).toString(), 302);
-      return new Response(renderLanding(LANDING[path], env, url.origin), {
+      return new Response(renderLanding(LANDING[path], env, url.origin, await landingCss(env, url)), {
         headers: {
           'content-type': 'text/html; charset=utf-8',
           'cache-control': 'public, max-age=0, s-maxage=300',

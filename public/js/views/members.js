@@ -63,8 +63,8 @@ export async function list(el) {
   const hq = hashQuery();
   if (hq.only) listState.only = hq.only;
   setPage(t('nav.members'), {
-    actions: `${can('staff') ? `<a class="btn btn-primary btn-sm" href="#/members/new">${icon('plus')}<span class="hide-sm">${esc(t('member.new'))}</span></a>` : ''}
-      <button class="icon-btn" data-export title="${esc(t('common.export'))}">${icon('download')}</button>`,
+    actions: `${can('staff') ? `<a class="btn btn-primary btn-sm" href="#/members/new" aria-label="${esc(t('member.new'))}">${icon('plus')}<span class="hide-sm">${esc(t('member.new'))}</span></a>` : ''}
+      <button class="icon-btn" data-export title="${esc(t('common.export'))}" aria-label="${esc(t('common.export'))}">${icon('download')}</button>`,
   });
   const types = state.me.types || [];
   el.innerHTML = `
@@ -152,7 +152,7 @@ export async function detail(el, { id }, stale) {
   if (stale()) return;
   setPage(fullName(m), {
     back: '#/members',
-    actions: can('staff') ? `<a class="icon-btn" href="#/members/${m.id}/edit" title="${esc(t('common.edit'))}">${icon('edit')}</a>` : '',
+    actions: can('staff') ? `<a class="icon-btn" href="#/members/${m.id}/edit" title="${esc(t('common.edit'))}" aria-label="${esc(t('common.edit'))}">${icon('edit')}</a>` : '',
   });
   const info = [
     ['phone', m.phone ? `<a href="tel:${esc(m.phone)}">${esc(m.phone)}</a>` : ''],
@@ -194,12 +194,12 @@ export async function detail(el, { id }, stale) {
     <section class="card-preview" data-card>${cardHtml(m)}</section>
 
     <section class="panel">
-      <div class="panel-head"><h3>${esc(t('tx.history'))}</h3>${voided ? `<button class="link" data-show-void>${esc(t('tx.show_void', { n: voided }))}</button>` : ''}</div>
+      <div class="panel-head"><h2>${esc(t('tx.history'))}</h2>${voided ? `<button class="link" data-show-void>${esc(t('tx.show_void', { n: voided }))}</button>` : ''}</div>
       <ul class="rows timeline">${visible.length ? txRows(visible.slice().reverse()) : `<li class="muted pad">${esc(t('tx.none'))}</li>`}</ul>
     </section>
 
     <section class="panel">
-      <div class="panel-head"><h3>${esc(t('member.details'))}</h3></div>
+      <div class="panel-head"><h2>${esc(t('member.details'))}</h2></div>
       <dl class="info-list">${info.map(([k, v]) => `<div><dt>${esc(t(`member.${k}`))}</dt><dd>${v}</dd></div>`).join('') || `<p class="muted pad">—</p>`}</dl>
       ${m.notes ? `<div class="notes"><span class="eyebrow">${esc(t('member.notes'))}</span><p>${esc(m.notes)}</p></div>` : ''}
       ${can('admin') ? `<div class="danger-zone">

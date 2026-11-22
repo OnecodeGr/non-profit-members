@@ -165,7 +165,7 @@ export async function docPdf(spec, tenant = state.me.tenant) {
       const cx = M + (i % 2) * cw, cy = y + Math.floor(i / 2) * 12;
       doc.setFont('Sans', 'bold');
       doc.setFontSize(7);
-      doc.setTextColor(139, 133, 122);
+      doc.setTextColor(107, 101, 91);
       doc.text(upper(k), cx, cy + 3);
       doc.setFont('Sans', 'normal');
       doc.setFontSize(11);
@@ -181,7 +181,7 @@ export async function docPdf(spec, tenant = state.me.tenant) {
       doc.setPage(p);
       doc.setFont('Sans', 'normal');
       doc.setFontSize(7.5);
-      doc.setTextColor(139, 133, 122);
+      doc.setTextColor(107, 101, 91);
       doc.text(`${t('doc.generated')} ${fmtDateTime(new Date().toISOString())}`, M, H - 8);
       doc.text(`${p} / ${pages}`, W / 2, H - 8, { align: 'center' });
       doc.textWithLink(`${t('common.created_by')} OneCode · onecode.gr`, W - M - doc.getTextWidth(`${t('common.created_by')} OneCode · onecode.gr`), H - 8, { url: 'https://onecode.gr' });

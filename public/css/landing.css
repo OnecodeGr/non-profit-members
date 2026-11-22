@@ -35,7 +35,7 @@ body.lp { background: var(--paper); }
   .lp-hero-side::before { content: ''; position: absolute; inset: 20px -20px -20px 20px; border: 1px solid var(--gold); opacity: .55; pointer-events: none; z-index: -1; }
 }
 
-.lp-showcase { position: relative; display: block; padding: 40px 18px 70px; background: #0e0d0b url(/img/hero.jpg) center / cover; margin-top: 20px; }
+.lp-showcase { position: relative; display: block; padding: 40px 18px 70px; background: #0e0d0b url(/img/hero.webp) center / cover; margin-top: 20px; }
 .lp-showcase::before { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(14,13,11,.55), rgba(14,13,11,.8)); }
 .lp-card { width: min(88vw, 470px); margin: 0 auto; transform: rotate(-4deg); }
 @media (min-width: 1020px) { .lp-showcase { padding: 90px 40px; } .lp-card { width: 520px; } }
@@ -73,7 +73,8 @@ body.lp { background: var(--paper); }
 .lp-prices { display: grid; gap: 0; border: 1px solid var(--line); background: var(--card); }
 .lp-prices article { padding: 30px 26px; display: grid; gap: 8px; align-content: start; border-bottom: 1px solid var(--line); position: relative; }
 .lp-prices article:last-child { border-bottom: 0; }
-.lp-prices article.featured { background: var(--ink); color: var(--paper); }
+/* The featured plan is always ink-on-gold regardless of theme (theme tokens invert in dark mode). */
+.lp-prices article.featured { background: #141210; color: #f4efe6; }
 .lp-prices article.featured .muted, .lp-prices article.featured .lp-vat { color: #b9ae9b; }
 .lp-prices article.featured::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--gold); }
 .lp-prices h3 { font-size: 1.6rem; }
@@ -83,9 +84,9 @@ body.lp { background: var(--paper); }
 .featured .lp-amount span { color: #b9ae9b; }
 .lp-vat { font-size: .88rem; color: var(--muted); margin: 0; }
 .lp-limit { margin: 14px 0 0; padding-top: 14px; border-top: 1px solid var(--line); font-weight: 700; font-size: .85rem; letter-spacing: .04em; }
-.featured .lp-limit { border-top-color: #39322a; color: var(--gold-soft); }
+.featured .lp-limit { border-top-color: #39322a; color: #e9dcc0; }
 @media (min-width: 900px) { .lp-prices { grid-template-columns: repeat(3, 1fr); } .lp-prices article { border-bottom: 0; border-right: 1px solid var(--line); padding: 38px 34px; } .lp-prices article:last-child { border-right: 0; } }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .lp-prices article.featured { background: #050404; } }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .lp-prices article.featured { background: #050404; border: 1px solid #3b352d; } }
 .lp-price-foot { display: grid; gap: 26px; margin-top: 26px; }
 .lp-included { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; align-content: start; }
 .lp-included li { display: flex; gap: 10px; align-items: center; font-size: .95rem; }

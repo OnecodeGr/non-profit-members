@@ -36,7 +36,7 @@ export async function login(app, done) {
           <p>${esc(t('auth.hero_text'))}</p>
         </div>
       </div>
-      <div class="auth-panel">
+      <main class="auth-panel">
         <div class="auth-lang">${LANGS.map((l) => `<button class="${l === getLang() ? 'on' : ''}" data-l="${l}">${l.toUpperCase()}</button>`).join('')}</div>
         <form class="auth-form" novalidate>
           <div class="auth-brand">
@@ -57,7 +57,7 @@ export async function login(app, done) {
           <button class="btn btn-primary btn-lg btn-block" type="submit"><span>${esc(t('auth.login'))}</span></button>
         </form>
         ${credit()}
-      </div>
+      </main>
     </div>`;
     app.querySelectorAll('[data-l]').forEach((b) => (b.onclick = () => {
       setLang(b.dataset.l);

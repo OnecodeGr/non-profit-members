@@ -27,7 +27,7 @@ export async function debits(el, _p, stale) {
       <label class="field"><span>${esc(t('tx.date'))}</span><input name="date" type="date" value="${defYear}-01-01"></label>
       <label class="field"><span>${esc(t('tx.description'))}</span><input name="description" value="${esc(t('debits.default_desc', { year: defYear }))}"></label>
     </div>
-    <h4 class="sub-title">${esc(t('debits.amounts'))}</h4>
+    <h3 class="sub-title">${esc(t('debits.amounts'))}</h3>
     <div class="fee-list">
       ${types.map((ty) => `<label class="fee-row"><span><b>${esc(ty.name)}</b><small class="muted">${esc(t('member.count', { n: ty.member_count }))}</small></span>
         <div class="amount-input sm"><input data-type="${ty.id}" inputmode="decimal" value="${esc(centsToInput(ty.annual_fee))}" placeholder="0,00"></div></label>`).join('')}
@@ -39,7 +39,7 @@ export async function debits(el, _p, stale) {
     <div class="form-actions"><button class="btn btn-primary btn-lg" type="submit" disabled>${icon('calendar')}<span>${esc(t('debits.run'))}</span></button></div>
   </form>
   <section class="panel">
-    <div class="panel-head"><h3>${esc(t('debits.history'))}</h3></div>
+    <div class="panel-head"><h2>${esc(t('debits.history'))}</h2></div>
     ${runs.length ? `<ul class="rows">${runs.map((r) => `<li class="row">
       <span class="tx-ic out">${icon('calendar')}</span>
       <span class="row-main"><b>${esc(r.description || t('debits.default_desc', { year: r.year }))}</b><small>${esc(t('debits.run_meta', { year: r.year, n: r.member_count, date: fmtDate(r.created_at) }))}${r.created_by_name ? ` · ${esc(r.created_by_name)}` : ''}</small></span>

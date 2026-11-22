@@ -5,7 +5,7 @@ import { docPdf, cardsPdf, docCsv, docXlsx, cellText } from './export.js';
 import { t } from './i18n.js';
 import { esc, icon, modal, toast, money, fmtDate, fmtDateTime, state, api, errText, fullName } from './core.js';
 
-const CARD_BG = '/img/card-texture.jpg';
+const CARD_BG = '/img/card-texture.webp';
 export { qrSvg };
 
 export const cardUrl = (m) => `${state.me?.public_url || location.origin}/c/${m.qr_token}`;

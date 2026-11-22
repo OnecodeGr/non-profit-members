@@ -10,7 +10,7 @@ import { shareSheet } from '../print.js';
 
 export async function events(el, _p, stale) {
   setPage(t('nav.events'), {
-    actions: can('staff') ? `<button class="btn btn-primary btn-sm" data-new>${icon('plus')}<span class="hide-sm">${esc(t('ev.new'))}</span></button>` : '',
+    actions: can('staff') ? `<button class="btn btn-primary btn-sm" data-new aria-label="${esc(t('ev.new'))}">${icon('plus')}<span class="hide-sm">${esc(t('ev.new'))}</span></button>` : '',
   });
   const { events: list } = await api('events');
   if (stale()) return;
@@ -27,8 +27,8 @@ export async function events(el, _p, stale) {
       <p class="muted">${esc(t('ev.text'))}</p>
     </section>
     ${list.length ? `
-    ${upcoming.length ? `<section class="panel"><div class="panel-head"><h3>${esc(t('ev.upcoming'))}</h3></div><ul class="rows">${upcoming.reverse().map(row).join('')}</ul></section>` : ''}
-    ${past.length ? `<section class="panel"><div class="panel-head"><h3>${esc(t('ev.past'))}</h3></div><ul class="rows">${past.map(row).join('')}</ul></section>` : ''}`
+    ${upcoming.length ? `<section class="panel"><div class="panel-head"><h2>${esc(t('ev.upcoming'))}</h2></div><ul class="rows">${upcoming.reverse().map(row).join('')}</ul></section>` : ''}
+    ${past.length ? `<section class="panel"><div class="panel-head"><h2>${esc(t('ev.past'))}</h2></div><ul class="rows">${past.map(row).join('')}</ul></section>` : ''}`
     : empty(t('ev.empty'), 'calendar')}`;
   const nb = document.querySelector('[data-new]');
   if (nb) nb.onclick = () => eventForm(null);
@@ -83,7 +83,7 @@ export async function eventDetail(el, { id }, stale) {
   const assembly = ev.kind === 'assembly';
   setPage(ev.title, {
     back: '#/events',
-    actions: can('staff') ? `<button class="icon-btn" data-edit title="${esc(t('common.edit'))}">${icon('edit')}</button>` : '',
+    actions: can('staff') ? `<button class="icon-btn" data-edit title="${esc(t('common.edit'))}" aria-label="${esc(t('common.edit'))}">${icon('edit')}</button>` : '',
   });
   el.innerHTML = `
   <section class="panel event-head">
@@ -112,7 +112,7 @@ export async function eventDetail(el, { id }, stale) {
     </div>
   </section>
   <section class="panel">
-    <div class="panel-head"><h3>${esc(t('ev.attendees'))} <span class="pill">${data.attendees.length}</span></h3></div>
+    <div class="panel-head"><h2>${esc(t('ev.attendees'))} <span class="pill">${data.attendees.length}</span></h2></div>
     <ul class="rows attendees"></ul>
   </section>
   ${can('admin') ? `<div class="danger-zone"><span></span><button class="btn btn-danger-ghost btn-sm" data-delete>${icon('trash')}<span>${esc(t('ev.delete'))}</span></button></div>` : ''}`;

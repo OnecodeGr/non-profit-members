@@ -72,6 +72,21 @@ npm run dev                        # http://localhost:8787  (admin panel: /admin
    (the `onecode.win` zone must be on the same Cloudflare account).
 8. Submit `https://members.onecode.win/sitemap.xml` in Google Search Console and Bing Webmaster Tools.
 
+## Quality audit
+
+`tools/audit` checks a running instance (default `http://localhost:8787`) against:
+
+- **axe-core**: WCAG 2.2 AA plus best practices, on every public and app screen, in light and dark mode, on phone and desktop (96 renders). It also flags horizontal overflow and JavaScript errors.
+- **Lighthouse**: performance, accessibility, best practices and SEO, using the official mobile and desktop presets. Private pages (portal, card, app) are noindex on purpose, so SEO is only enforced on the landing pages.
+- **html-validate** on the server-rendered pages, and a check for the security headers.
+
+```bash
+npm run dev           # in one terminal
+npm run audit         # in another; BASE=https://members.onecode.win npm run audit for production
+```
+
+The report is written to `tools/audit/report/report.md`. The tools live in their own `package.json`, so Cloudflare builds don't install them.
+
 ## Pricing (shown on the landing page)
 
 | Members | Net / year | With 24% VAT |

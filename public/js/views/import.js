@@ -140,7 +140,7 @@ export async function importView(el, _p) {
 function drawMapping(step, headers, data, mapping, filename) {
   step.innerHTML = `
   <section class="panel">
-    <div class="panel-head"><h3>${esc(t('import.mapping'))}</h3><span class="muted small">${esc(filename)} · ${esc(t('import.rows', { n: data.length }))}</span></div>
+    <div class="panel-head"><h2>${esc(t('import.mapping'))}</h2><span class="muted small">${esc(filename)} · ${esc(t('import.rows', { n: data.length }))}</span></div>
     <p class="muted small pad-x">${esc(t('import.mapping_hint'))}</p>
     <div class="table-scroll"><table class="table map-table">
       <thead><tr>${headers.map((h, i) => `<th><select data-col="${i}"><option value="">${esc(t('import.ignore'))}</option>${FIELDS.map((f) => `<option value="${f}" ${mapping[i] === f ? 'selected' : ''}>${esc(t(`field.${f}`))}</option>`).join('')}</select><small>${esc(h)}</small></th>`).join('')}</tr></thead>

@@ -10,7 +10,7 @@ import { receiptSheet, txDialog } from './members.js';
 // ---------- pending + recent ----------
 export async function payments(el, _p, stale) {
   setPage(t('nav.payments'), {
-    actions: can('staff') ? `<a class="btn btn-primary btn-sm" href="#/payments/new">${icon('plus')}<span class="hide-sm">${esc(t('pay.record'))}</span></a>` : '',
+    actions: can('staff') ? `<a class="btn btn-primary btn-sm" href="#/payments/new" aria-label="${esc(t('pay.record'))}">${icon('plus')}<span class="hide-sm">${esc(t('pay.record'))}</span></a>` : '',
   });
   const [pending, recent] = await Promise.all([
     api('transactions', { query: { type: 'payment', status: 'pending', limit: 500 } }),
@@ -20,7 +20,7 @@ export async function payments(el, _p, stale) {
   const admin = can('admin');
   el.innerHTML = `
   <section class="panel">
-    <div class="panel-head"><h3>${esc(t('pay.pending_title'))} <span class="pill pill-warn">${pending.rows.length}</span></h3>
+    <div class="panel-head"><h2>${esc(t('pay.pending_title'))} <span class="pill pill-warn">${pending.rows.length}</span></h2>
       ${admin && pending.rows.length ? `<label class="check-all"><input type="checkbox" data-all> ${esc(t('common.select_all'))}</label>` : ''}</div>
     <p class="muted small pad-x">${esc(admin ? t('pay.pending_hint_admin') : t('pay.pending_hint_staff'))}</p>
     ${pending.rows.length ? `<ul class="rows">${pending.rows.map((x) => `<li class="row pending-row">
@@ -37,7 +37,7 @@ export async function payments(el, _p, stale) {
     : empty(t('pay.no_pending'), 'check')}
   </section>
   <section class="panel">
-    <div class="panel-head"><h3>${esc(t('pay.recent'))}</h3><a class="link" href="#/transactions?type=payment">${esc(t('common.view_all'))}</a></div>
+    <div class="panel-head"><h2>${esc(t('pay.recent'))}</h2><a class="link" href="#/transactions?type=payment">${esc(t('common.view_all'))}</a></div>
     ${recent.rows.length ? `<ul class="rows">${recent.rows.map((x) => `<li><button class="row" data-receipt="${x.id}" data-member="${x.member_id}">
       <span class="row-main"><b>${esc(fullName(x))}</b><small>${esc(fmtDate(x.date))} · ${esc(t(`method.${x.method || 'other'}`))} · #${x.receipt_no}</small></span>
       <span class="row-end"><b class="amount-in">${esc(money(-x.amount))}</b>${icon('receipt')}</span></button></li>`).join('')}</ul>` : `<p class="muted pad">${esc(t('dash.no_payments'))}</p>`}
@@ -191,11 +191,11 @@ const txState = { from: '', to: '', type: '', status: '', q: '' };
 export async function transactions(el) {
   const hq = hashQuery();
   if (hq.type) txState.type = hq.type;
-  setPage(t('nav.transactions'), { actions: `<button class="icon-btn" data-export title="${esc(t('common.export'))}">${icon('download')}</button>` });
+  setPage(t('nav.transactions'), { actions: `<button class="icon-btn" data-export title="${esc(t('common.export'))}" aria-label="${esc(t('common.export'))}">${icon('download')}</button>` });
   const year = new Date().getFullYear();
   el.innerHTML = `
   <div class="toolbar">
-    <div class="search">${icon('search')}<input type="search" data-k="q" placeholder="${esc(t('tx.search'))}" value="${esc(txState.q)}"></div>
+    <div class="search">${icon('search')}<input type="search" data-k="q" placeholder="${esc(t('tx.search'))}" aria-label="${esc(t('tx.search'))}" value="${esc(txState.q)}"></div>
     <div class="chips">
       <button class="chip" data-range="month">${esc(t('range.month'))}</button>
       <button class="chip" data-range="year">${esc(t('range.year', { year }))}</button>
@@ -205,9 +205,9 @@ export async function transactions(el) {
     <div class="toolbar-row">
       <input type="date" data-k="from" value="${esc(txState.from)}" aria-label="${esc(t('range.from'))}">
       <input type="date" data-k="to" value="${esc(txState.to)}" aria-label="${esc(t('range.to'))}">
-      <select data-k="type"><option value="">${esc(t('tx.all_types'))}</option>
+      <select data-k="type" aria-label="${esc(t('tx.type'))}"><option value="">${esc(t('tx.all_types'))}</option>
         ${['payment', 'annual', 'charge', 'credit', 'initial'].map((x) => `<option value="${x}" ${txState.type === x ? 'selected' : ''}>${esc(t(`tx.${x}`))}</option>`).join('')}</select>
-      <select data-k="status"><option value="">${esc(t('tx.all_statuses'))}</option>
+      <select data-k="status" aria-label="${esc(t('tx.status'))}"><option value="">${esc(t('tx.all_statuses'))}</option>
         ${['confirmed', 'pending', 'void'].map((x) => `<option value="${x}" ${txState.status === x ? 'selected' : ''}>${esc(t(`txstatus.${x}`))}</option>`).join('')}</select>
     </div>
   </div>

@@ -6,7 +6,8 @@
     "dev": "wrangler dev",
     "db:migrate:local": "wrangler d1 migrations apply members-db --local",
     "db:migrate": "wrangler d1 migrations apply members-db --remote",
-    "deploy": "wrangler deploy"
+    "deploy": "wrangler deploy",
+    "audit": "npm --prefix tools/audit install --no-audit --no-fund && node tools/audit/audit.mjs"
   },
   "repository": {
     "type": "git",

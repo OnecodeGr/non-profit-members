@@ -40,7 +40,7 @@ async function billingDialog(x, reload) {
     body: `
       <div class="bill-now">${subPill(x.subscription)} <span class="muted small">${esc(t('bill.active_members', { n: x.active_count }))}${x.member_limit ? ` / ${x.member_limit}` : ''}</span></div>
       <form class="form bill-form" onsubmit="return false">
-        <h4 class="sub-title">${esc(t('bill.record'))}</h4>
+        <h3 class="sub-title">${esc(t('bill.record'))}</h3>
         <div class="grid-2">
           <label class="field"><span>${esc(t('bill.limit'))}</span><select name="member_limit">${tiers.map((q) => `<option value="${q.member_limit}" ${q.member_limit === suggestedLimit ? 'selected' : ''}>${esc(tierLabel(q))}</option>`).join('')}</select></label>
           <label class="field"><span>${esc(t('bill.net'))}</span><input name="net" inputmode="decimal" value="${esc((next.net / 100).toFixed(2))}"></label>
@@ -52,14 +52,14 @@ async function billingDialog(x, reload) {
         <label class="switch"><input type="checkbox" name="paid" checked><span class="track"></span><span>${esc(t('bill.paid_now'))}</span></label>
         <div class="form-actions"><button class="btn btn-primary" data-save-sub>${icon('check')}<span>${esc(t('bill.save'))}</span></button></div>
       </form>
-      <h4 class="sub-title">${esc(t('bill.remind'))}</h4>
+      <h3 class="sub-title">${esc(t('bill.remind'))}</h3>
       <div class="share-apps">
         ${mail ? `<a class="chip" href="mailto:${esc(mail)}?subject=${encodeURIComponent(t('bill.reminder_subject', { org: x.name }))}&body=${encodeURIComponent(reminder)}">Email · ${esc(mail)}</a>` : ''}
         ${phone ? `<a class="chip" target="_blank" rel="noopener" href="https://wa.me/${esc(phone.length === 10 ? `30${phone}` : phone)}?text=${encodeURIComponent(reminder)}">WhatsApp</a>
           <a class="chip" href="viber://forward?text=${encodeURIComponent(reminder)}">Viber</a>` : ''}
         <button class="chip" data-copy="${esc(reminder)}">${esc(t('bill.copy_text'))}</button>
       </div>
-      <h4 class="sub-title">${esc(t('bill.history'))}</h4>
+      <h3 class="sub-title">${esc(t('bill.history'))}</h3>
       ${subs.length ? `<div class="table-scroll"><table class="table"><thead><tr><th>${esc(t('bill.period'))}</th><th class="r">${esc(t('bill.limit_short'))}</th><th class="r">${esc(t('bill.total'))}</th><th>${esc(t('bill.paid'))}</th><th></th></tr></thead><tbody>
         ${subs.map((sb) => `<tr><td>${esc(fmtDate(sb.period_start))} – ${esc(fmtDate(sb.period_end))}${sb.reference ? `<small class="muted block">${esc(sb.reference)}</small>` : ''}</td>
           <td class="r">${sb.member_limit}</td><td class="r">${esc(eur(sb.total))}<small class="muted block">${esc(eur(sb.net))} + ${esc(eur(sb.vat))}</small></td>
@@ -134,7 +134,7 @@ function adminLogin(app, error = '') {
   app.innerHTML = `
   <div class="auth">
     <div class="auth-hero" aria-hidden="true"><div class="auth-hero-inner"><span class="eyebrow">OneCode</span><h2>${esc(t('admin.hero'))}</h2><p>${esc(t('admin.hero_text'))}</p></div></div>
-    <div class="auth-panel">
+    <main class="auth-panel">
       <div class="auth-lang">${LANGS.map((l) => `<button class="${l === getLang() ? 'on' : ''}" data-l="${l}">${l.toUpperCase()}</button>`).join('')}</div>
       <form class="auth-form">
         <div class="auth-brand"><span class="brand-mono lg">${icon('shield')}</span><span class="eyebrow">${esc(t('admin.title'))}</span><h1>${esc(t('app.name'))}</h1></div>
@@ -144,7 +144,7 @@ function adminLogin(app, error = '') {
         <button class="btn btn-primary btn-lg btn-block">${esc(t('auth.login'))}</button>
       </form>
       ${credit()}
-    </div>
+    </main>
   </div>`;
   app.querySelectorAll('[data-l]').forEach((b) => (b.onclick = () => {
     setLang(b.dataset.l);
@@ -179,7 +179,7 @@ async function adminHome(app, me) {
         <div class="hero-actions"><button class="btn btn-primary" data-new>${icon('plus')}<span>${esc(t('admin.new_tenant'))}</span></button></div>
       </section>
       <section class="stats billing-stats"></section>
-      <div class="toolbar"><div class="search">${icon('search')}<input type="search" placeholder="${esc(t('admin.search'))}"></div>
+      <div class="toolbar"><div class="search">${icon('search')}<input type="search" placeholder="${esc(t('admin.search'))}" aria-label="${esc(t('admin.search'))}"></div>
         <div class="chips">${['', 'expiring', 'lapsed', 'over', 'none'].map((f) => `<button class="chip ${f === '' ? 'on' : ''}" data-filter="${f}">${esc(t(`bill.f_${f || 'all'}`))}</button>`).join('')}</div></div>
       <ul class="rows tenant-list panel"><li class="loading"><span class="spinner"></span></li></ul>
     </main>
@@ -279,7 +279,7 @@ async function createTenant(reload) {
         <label class="field"><span>${esc(t('settings.annual_fee'))}</span><input name="annual_fee" inputmode="decimal" placeholder="0,00"></label>
         <label class="field"><span>${esc(t('member.notes'))}</span><input name="notes"></label>
       </div>
-      <h4 class="sub-title">${esc(t('bill.title'))}</h4>
+      <h3 class="sub-title">${esc(t('bill.title'))}</h3>
       <div class="grid-2">
         <label class="field"><span>${esc(t('bill.limit'))}</span><select name="member_limit">${pricing.map((q) => `<option value="${q.member_limit}">${esc(tierLabel(q))}</option>`).join('')}<option value="">${esc(t('bill.unlimited'))}</option></select></label>
         <label class="field"><span>${esc(t('bill.paid_until'))}</span><input type="date" name="paid_until" value="${esc(yearFrom(todayIso()))}"></label>
@@ -337,7 +337,7 @@ async function tenantDialog(x, reload) {
         <label class="field"><span>${esc(t('settings.default_lang'))}</span><select name="default_lang">${LANGS.map((l) => `<option value="${l}" ${x.default_lang === l ? 'selected' : ''}>${esc(t(`lang.${l}`))}</option>`).join('')}</select></label>
         <label class="field"><span>${esc(t('member.notes'))}</span><input name="notes" value="${esc(x.notes)}"></label>
       </div>
-      <h4 class="sub-title">${esc(t('bill.title'))} ${subPill(x.subscription)}</h4>
+      <h3 class="sub-title">${esc(t('bill.title'))} ${subPill(x.subscription)}</h3>
       <div class="grid-2">
         <label class="field"><span>${esc(t('bill.paid_until'))}</span><input type="date" name="paid_until" value="${esc(x.paid_until || '')}"></label>
         <label class="field"><span>${esc(t('bill.limit'))}</span><input name="member_limit" type="number" min="1" value="${esc(x.member_limit ?? '')}" placeholder="${esc(t('bill.unlimited'))}"></label>

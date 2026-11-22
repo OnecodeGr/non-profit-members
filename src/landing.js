@@ -186,7 +186,7 @@ export function contactConfig(env) {
   };
 }
 
-export function renderLanding(lang, env, origin) {
+export function renderLanding(lang, env, origin, inlineCss = '') {
   const L = T[lang] || T.el;
   const base = (env.PUBLIC_URL || origin).replace(/\/$/, '');
   const canonical = `${base}${L.path === '/' ? '/' : L.path}`;
@@ -263,14 +263,14 @@ ${Object.keys(T).filter((l) => l !== lang).map((l) => `<meta property="og:locale
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="preload" href="/fonts/serif-500.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/manrope-500.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/css/app.css">
-<link rel="stylesheet" href="/css/landing.css">
+<link rel="preload" href="/img/hero.webp" as="image" type="image/webp" media="(min-width: 1020px)" fetchpriority="high">
+${inlineCss ? `<style>${inlineCss}</style>` : '<link rel="stylesheet" href="/css/app.css">\n<link rel="stylesheet" href="/css/landing.css">'}
 <script type="application/ld+json">${JSON.stringify(jsonld).replace(/</g, '\\u003c')}</script>
 ${cfg.turnstile ? '<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>' : ''}
 </head>
 <body class="lp">
 <header class="lp-nav">
-  <a class="lp-logo" href="${L.path}" aria-label="Members"><img src="/img/icon.svg" alt="" width="34" height="34"><span>Members<small>by OneCode</small></span></a>
+  <a class="lp-logo" href="${L.path}"><img src="/img/icon.svg" alt="" width="34" height="34"><span>Members<small>by OneCode</small></span></a>
   <nav class="lp-links" aria-label="Main">${L.nav.map((n, i) => `<a href="#${ids[i]}">${esc(n)}</a>`).join('')}</nav>
   <div class="lp-nav-end">
     <div class="lp-lang">${Object.keys(T).map((l) => `<a href="${T[l].path}" hreflang="${l}" lang="${l}" class="${l === lang ? 'on' : ''}">${l.toUpperCase()}</a>`).join('')}</div>
@@ -291,8 +291,8 @@ ${cfg.turnstile ? '<script src="https://challenges.cloudflare.com/turnstile/v0/a
     <form class="lp-login" method="post" action="/api/login" novalidate>
       <h2>${esc(L.login_title)}</h2>
       <p class="muted small">${esc(L.login_sub)}</p>
-      <label class="field"><span>${esc(L.key)}</span><input name="tenant_key" autocomplete="organization" autocapitalize="none" spellcheck="false" required></label>
-      <label class="field"><span>${esc(L.user)}</span><input name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required></label>
+      <label class="field"><span>${esc(L.key)}</span><input type="text" name="tenant_key" autocomplete="organization" autocapitalize="none" spellcheck="false" required></label>
+      <label class="field"><span>${esc(L.user)}</span><input type="text" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required></label>
       <label class="field"><span>${esc(L.pass)}</span><input name="password" type="password" autocomplete="current-password" required></label>
       <p class="alert" role="alert" hidden></p>
       <button class="btn btn-primary btn-lg btn-block" type="submit">${esc(L.login_btn)}</button>
@@ -302,7 +302,7 @@ ${cfg.turnstile ? '<script src="https://challenges.cloudflare.com/turnstile/v0/a
 </section>
 
 <section class="lp-showcase" aria-hidden="true">
-  <div class="mcard lp-card"><div class="mcard-in"><div class="mcard-bg" style="background-image:url('/img/card-texture.jpg')"></div>
+  <div class="mcard lp-card"><div class="mcard-in"><div class="mcard-bg" style="background-image:url('/img/card-texture.webp')"></div>
     <div class="mcard-top"><span class="mcard-mono">Α</span><span class="mcard-org">${esc(L.card_org)}</span></div>
     <div class="mcard-main"><div class="mcard-info"><span class="mcard-label">${esc(L.card_member)}</span><span class="mcard-name">Ελένη<br>Αλεξίου</span>
       <span class="mcard-meta"><b>№ 128</b></span><span class="mcard-meta small">${esc(L.card_since)} 2019</span></div>
@@ -356,12 +356,12 @@ ${cfg.turnstile ? '<script src="https://challenges.cloudflare.com/turnstile/v0/a
     <p class="lp-direct"><a href="mailto:${esc(cfg.email)}">${esc(cfg.email)}</a></p></header>
   <form class="lp-form form" novalidate>
     <div class="grid-2">
-      <label class="field"><span>${esc(L.f_name)} *</span><input name="name" required autocomplete="name" maxlength="120"></label>
+      <label class="field"><span>${esc(L.f_name)} *</span><input type="text" name="name" required autocomplete="name" maxlength="120"></label>
       <label class="field"><span>${esc(L.f_email)} *</span><input name="email" type="email" required autocomplete="email" maxlength="200"></label>
       <label class="field"><span>${esc(L.f_phone)}</span><input name="phone" type="tel" autocomplete="tel" maxlength="40"></label>
-      <label class="field"><span>${esc(L.f_org)}</span><input name="org" autocomplete="organization" maxlength="200"></label>
-      <label class="field"><span>${esc(L.f_members)}</span><input name="members" inputmode="numeric" maxlength="8"></label>
-      <label class="field hp" aria-hidden="true"><span>Website</span><input name="website" tabindex="-1" autocomplete="off"></label>
+      <label class="field"><span>${esc(L.f_org)}</span><input type="text" name="org" autocomplete="organization" maxlength="200"></label>
+      <label class="field"><span>${esc(L.f_members)}</span><input type="text" name="members" inputmode="numeric" maxlength="8"></label>
+      <label class="field hp" aria-hidden="true"><span>Website</span><input type="text" name="website" tabindex="-1" autocomplete="off"></label>
     </div>
     <label class="field"><span>${esc(L.f_message)} *</span><textarea name="message" rows="5" required maxlength="5000"></textarea></label>
     <div class="ts" data-sitekey="${esc(cfg.turnstile)}"></div>
@@ -374,15 +374,15 @@ ${cfg.turnstile ? '<script src="https://challenges.cloudflare.com/turnstile/v0/a
 
 <footer class="lp-footer">
   <div><a class="lp-logo" href="${L.path}"><img src="/img/icon.svg" alt="" width="30" height="30"><span>Members<small>by OneCode</small></span></a><p class="muted small">${esc(L.footer)}</p></div>
-  <nav>${L.nav.map((n, i) => `<a href="#${ids[i]}">${esc(n)}</a>`).join('')}</nav>
+  <nav aria-label="Footer">${L.nav.map((n, i) => `<a href="#${ids[i]}">${esc(n)}</a>`).join('')}</nav>
   <p class="small muted">© ${new Date().getFullYear()} OneCode · ${esc(L.rights)}<br>Created by <a href="https://onecode.gr" target="_blank" rel="noopener">OneCode</a></p>
 </footer>
 
-<button class="lp-suggest" type="button" data-suggest aria-haspopup="dialog">${icon('<path d="M4 5h16v11H8l-4 4z"/><path d="M8 9h8M8 12h5"/>')}<span>${esc(L.suggest)}</span></button>
+<button class="lp-suggest" type="button" data-suggest aria-haspopup="dialog" aria-label="${esc(L.suggest)}">${icon('<path d="M4 5h16v11H8l-4 4z"/><path d="M8 9h8M8 12h5"/>')}<span>${esc(L.suggest)}</span></button>
 <dialog class="lp-dialog" data-suggest-dialog>
   <form method="dialog"><h3>${esc(L.suggest_title)}</h3><p class="muted">${esc(L.suggest_text)}</p>
     <div class="lp-channels" data-channels></div>
-    <button class="btn btn-ghost btn-block">OK</button></form>
+    <button type="submit" class="btn btn-ghost btn-block">OK</button></form>
 </dialog>
 <script>window.LP=${JSON.stringify({ i18n, cfg }).replace(/</g, '\\u003c')};</script>
 <script src="/js/landing.js" defer></script>

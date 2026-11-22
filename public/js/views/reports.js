@@ -8,7 +8,7 @@ const rState = { only: '', status: 'active', type: '' };
 export async function reports(el) {
   const hq = hashQuery();
   if (hq.only) rState.only = hq.only;
-  setPage(t('nav.reports'), { actions: `<button class="btn btn-primary btn-sm" data-export>${icon('share')}<span class="hide-sm">${esc(t('common.export'))}</span></button>` });
+  setPage(t('nav.reports'), { actions: `<button class="btn btn-primary btn-sm" data-export aria-label="${esc(t('common.export'))}">${icon('share')}<span class="hide-sm">${esc(t('common.export'))}</span></button>` });
   const types = state.me.types || [];
   el.innerHTML = `
   <section class="panel intro">
@@ -19,12 +19,12 @@ export async function reports(el) {
   <div class="toolbar">
     <div class="chips">${['', 'owing', 'credit', 'settled'].map((o) => `<button class="chip ${rState.only === o ? 'on' : ''}" data-only="${o}">${esc(o ? t(`report.only_${o}`) : t('common.all'))}</button>`).join('')}</div>
     <div class="toolbar-row">
-      <select data-k="status"><option value="">${esc(t('common.all_statuses'))}</option>${['active', 'inactive'].map((s) => `<option value="${s}" ${rState.status === s ? 'selected' : ''}>${esc(t(`status.${s}`))}</option>`).join('')}</select>
-      ${types.length ? `<select data-k="type"><option value="">${esc(t('member.all_types'))}</option>${types.map((x) => `<option value="${x.id}" ${String(rState.type) === String(x.id) ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select>` : ''}
+      <select data-k="status" aria-label="${esc(t('member.status'))}"><option value="">${esc(t('common.all_statuses'))}</option>${['active', 'inactive'].map((s) => `<option value="${s}" ${rState.status === s ? 'selected' : ''}>${esc(t(`status.${s}`))}</option>`).join('')}</select>
+      ${types.length ? `<select data-k="type" aria-label="${esc(t('member.type'))}"><option value="">${esc(t('member.all_types'))}</option>${types.map((x) => `<option value="${x.id}" ${String(rState.type) === String(x.id) ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select>` : ''}
     </div>
   </div>
   <section class="stats stats-3 report-stats"></section>
-  <section class="panel"><div class="table-scroll"><table class="table report-table">
+  <section class="panel"><div class="table-scroll" tabindex="0"><table class="table report-table">
     <thead><tr><th>${esc(t('member.no_short'))}</th><th>${esc(t('member.name'))}</th><th class="r hide-sm">${esc(t('doc.total_charged'))}</th><th class="r hide-sm">${esc(t('doc.total_paid'))}</th><th class="r">${esc(t('bal.balance'))}</th></tr></thead>
     <tbody></tbody></table></div></section>`;
 
@@ -81,7 +81,7 @@ export async function cards(el) {
     <p class="muted">${esc(t('card.batch_text'))}</p>
   </section>
   <div class="toolbar">
-    <div class="search">${icon('search')}<input type="search" placeholder="${esc(t('member.search'))}"></div>
+    <div class="search">${icon('search')}<input type="search" placeholder="${esc(t('member.search'))}" aria-label="${esc(t('member.search'))}"></div>
     <label class="check-all"><input type="checkbox" data-all> ${esc(t('common.select_all'))}</label>
   </div>
   <ul class="rows card-pick"></ul>

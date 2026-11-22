@@ -32,7 +32,7 @@ export async function publicCard(app, token) {
   try {
     data = await api(`public/card/${token}`);
   } catch (e) {
-    app.innerHTML = `<div class="public"><div class="panel pad center">${icon('x')}<p>${esc(errText(e))}</p></div>${credit()}</div>`;
+    app.innerHTML = `<main class="public"><div class="panel pad center">${icon('x')}<p>${esc(errText(e))}</p></div>${credit()}</main>`;
     return;
   }
   if (!hasStoredLang()) setLang(data.tenant.default_lang || 'el', false);
@@ -41,7 +41,7 @@ export async function publicCard(app, token) {
     const valid = m.status === 'active';
     document.title = `${fullName(m)} · ${tn.name}`;
     app.innerHTML = `
-    <div class="public">
+    <main class="public">
       <header class="pub-head">${tn.logo ? `<img src="${esc(tn.logo)}" alt="">` : `<span class="brand-mono">${esc(tn.name.slice(0, 1))}</span>`}<span>${esc(tn.name)}</span></header>
       <section class="verify ${valid ? 'ok' : 'bad'}">
         <div class="verify-mark">${icon(valid ? 'shield' : 'x')}</div>
@@ -62,7 +62,7 @@ export async function publicCard(app, token) {
         <p class="muted small">${esc(t('verify.save_hint'))}</p>
       </section>
       ${credit()}
-    </div>`;
+    </main>`;
     app.querySelector('.public').prepend(langBar(draw));
   };
   draw();
@@ -74,7 +74,7 @@ export async function publicShare(app, token) {
   try {
     data = await api(`public/share/${token}`);
   } catch (e) {
-    app.innerHTML = `<div class="public"><div class="panel pad center">${icon('clock')}<p>${esc(e.code === 'link_expired' ? t('err.link_expired') : errText(e))}</p></div>${credit()}</div>`;
+    app.innerHTML = `<main class="public"><div class="panel pad center">${icon('clock')}<p>${esc(e.code === 'link_expired' ? t('err.link_expired') : errText(e))}</p></div>${credit()}</main>`;
     return;
   }
   if (!hasStoredLang()) setLang(data.tenant.default_lang || 'el', false);
@@ -85,20 +85,20 @@ export async function publicShare(app, token) {
     else if (data.kind === 'receipt') spec = receiptSpec(data.member, data.transaction, tn);
     else if (data.kind === 'balances') spec = balancesSpec(data.report, data.filters, tn);
     else if (data.kind === 'card') {
-      app.innerHTML = `<div class="public"><section class="card-preview">${cardHtml(data.member, tn)}</section>${credit()}</div>`;
+      app.innerHTML = `<main class="public"><section class="card-preview">${cardHtml(data.member, tn)}</section>${credit()}</main>`;
       return;
     }
     document.title = `${spec.title} · ${tn.name}`;
     app.innerHTML = `
-    <div class="public public-doc">
+    <main class="public public-doc">
       <div class="pub-actions">
         <button class="btn btn-primary" data-pdf>${icon('download')}<span>${esc(t('share.pdf'))}</span></button>
         <button class="btn btn-ghost" data-print>${icon('print')}<span>${esc(t('share.print'))}</span></button>
       </div>
-      <div class="paper">${docHtml(spec, tn)}</div>
+      <div class="paper" tabindex="0" role="region" aria-label="${esc(spec.title)}">${docHtml(spec, tn)}</div>
       <p class="muted small center">${esc(t('share.valid_until', { date: fmtDate(data.expires_at) }))}</p>
       ${credit()}
-    </div>`;
+    </main>`;
     app.querySelector('.public').prepend(langBar(draw));
     app.querySelector('[data-pdf]').onclick = async (e) => {
       e.currentTarget.classList.add('busy');
@@ -132,7 +132,7 @@ export async function memberPortal(app, token) {
   try {
     await load();
   } catch (e) {
-    app.innerHTML = `<div class="public"><div class="panel pad center">${icon('clock')}<p>${esc(e.code === 'link_expired' ? t('portal.invalid') : errText(e))}</p></div>${credit()}</div>`;
+    app.innerHTML = `<main class="public"><div class="panel pad center">${icon('clock')}<p>${esc(e.code === 'link_expired' ? t('portal.invalid') : errText(e))}</p></div>${credit()}</main>`;
     return;
   }
   if (!hasStoredLang()) setLang(data.tenant.default_lang || 'el', false);
@@ -148,7 +148,7 @@ export async function memberPortal(app, token) {
     const pendingTx = txs.filter((x) => x.status === 'pending');
     const ref = `${t('portal.ref_prefix')} №${m.member_no} ${m.last_name}`;
     app.innerHTML = `
-    <div class="public portal">
+    <main class="public portal">
       <header class="pub-head">${tn.logo ? `<img src="${esc(tn.logo)}" alt="">` : `<span class="brand-mono">${esc(tn.name.slice(0, 1))}</span>`}<span>${esc(tn.name)}</span></header>
       <section class="portal-hello">
         <span class="eyebrow">${esc(t('portal.eyebrow'))}</span>
@@ -165,7 +165,7 @@ export async function memberPortal(app, token) {
         <button class="btn btn-ghost" data-statement>${icon('receipt')}<span>${esc(t('portal.statement_pdf'))}</span></button></div>
 
       ${tn.bank_iban ? `<section class="panel portal-bank">
-        <div class="panel-head"><h3>${esc(t('portal.pay_title'))}</h3></div>
+        <div class="panel-head"><h2>${esc(t('portal.pay_title'))}</h2></div>
         <div class="pad">
           <p class="muted small">${esc(t('portal.pay_text'))}</p>
           <dl class="info-list">
@@ -179,7 +179,7 @@ export async function memberPortal(app, token) {
       </section>` : ''}
 
       <section class="panel">
-        <div class="panel-head"><h3>${esc(t('portal.report_title'))}</h3></div>
+        <div class="panel-head"><h2>${esc(t('portal.report_title'))}</h2></div>
         <form class="form pad portal-pay" novalidate>
           <p class="muted small">${esc(t('portal.report_text'))}</p>
           <div class="grid-2">
@@ -194,23 +194,23 @@ export async function memberPortal(app, token) {
         </form>
       </section>
 
-      ${pendingTx.length ? `<section class="panel"><div class="panel-head"><h3>${esc(t('portal.pending'))}</h3></div><ul class="rows">${pendingTx.map((x) => `<li class="row">
+      ${pendingTx.length ? `<section class="panel"><div class="panel-head"><h2>${esc(t('portal.pending'))}</h2></div><ul class="rows">${pendingTx.map((x) => `<li class="row">
         <span class="row-main"><b>${esc(cur(-x.amount))}</b><small>${esc(fd(x.date))}${x.reference ? ` · ${esc(x.reference)}` : ''}</small></span><span class="pill pill-warn">${esc(t('txstatus.pending'))}</span></li>`).join('')}</ul></section>` : ''}
 
       <section class="panel">
-        <div class="panel-head"><h3>${esc(t('tx.history'))}</h3></div>
+        <div class="panel-head"><h2>${esc(t('tx.history'))}</h2></div>
         <ul class="rows">${txs.filter((x) => x.status === 'confirmed').reverse().map((x) => `<li class="row">
           <span class="row-main"><b>${esc(txLabel(x))}</b><small>${esc(fd(x.date))}${x.receipt_no ? ` · #${x.receipt_no}` : ''}</small></span>
           <span class="row-end"><b class="${x.amount < 0 ? 'amount-in' : 'amount-out'}">${x.amount < 0 ? '−' : '+'}${esc(cur(Math.abs(x.amount)))}</b>
           ${x.receipt_no ? `<button class="link" data-receipt="${x.id}">${esc(t('doc.receipt'))}</button>` : ''}</span></li>`).join('') || `<li class="muted pad">${esc(t('tx.none'))}</li>`}</ul>
       </section>
 
-      ${data.events.length ? `<section class="panel"><div class="panel-head"><h3>${esc(t('nav.events'))}</h3></div><ul class="rows">${data.events.map((e) => `<li class="row">
+      ${data.events.length ? `<section class="panel"><div class="panel-head"><h2>${esc(t('nav.events'))}</h2></div><ul class="rows">${data.events.map((e) => `<li class="row">
         <span class="row-main"><b>${esc(e.title)}</b><small>${esc(fd(e.date))}${e.location ? ` · ${esc(e.location)}` : ''}</small></span>
         ${e.checked_at ? `<span class="pill pill-ok">${esc(t('ev.attended'))}</span>` : ''}</li>`).join('')}</ul></section>` : ''}
       <p class="muted small center">${esc(t('portal.private'))}</p>
       ${credit()}
-    </div>`;
+    </main>`;
     app.querySelector('.public').prepend(langBar(draw));
 
     const statementMember = { ...m, type_name: m.type_name };
